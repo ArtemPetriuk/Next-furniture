@@ -46,6 +46,7 @@ export const ProductsGroupList: React.FC<Props> = ({
             name={product.name}
             imageUrl={product.imageUrl}
             price={product.items?.[0]?.price ?? product.price ?? 0}
+            description={product.description}
           />
         ))}
       </div>

@@ -2,10 +2,10 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { FilterChecboxProps, FilterCheckbox } from "./filter-checkbox";
+import { FilterCheckboxProps, FilterCheckbox } from "./filter-checkbox";
 import { Input, Skeleton } from "../ui";
 
-type Item = FilterChecboxProps;
+type Item = FilterCheckboxProps;
 
 interface Props {
   title: string;
@@ -49,21 +49,21 @@ export const CheckboxFiltersGroup: React.FC<Props> = ({
   if (loading) {
     return (
       <div className={className}>
-        <p className="font-bold mb-3">{title}</p>
+        <p className="mb-3 font-bold">{title}</p>
 
         {...Array(limit)
           .fill(0)
           .map((_, index) => (
-            <Skeleton key={index} className="h-6 mb-4 rounded-[8px]" />
+            <Skeleton key={index} className="mb-4 h-6 rounded-[8px]" />
           ))}
 
-        <Skeleton className="w-28 h-6 mb-4 rounded-[8px]" />
+        <Skeleton className="mb-4 h-6 w-28 rounded-[8px]" />
       </div>
     );
   }
 
   const filteredItems = items.filter((item) =>
-    item.text.toLowerCase().includes(searchValue.toLowerCase())
+    item.text.toLowerCase().includes(searchValue.toLowerCase()),
   );
 
   const list = showAll
@@ -78,15 +78,15 @@ export const CheckboxFiltersGroup: React.FC<Props> = ({
             onChange={onChangeSearchInput}
             value={searchValue1}
             placeholder={searchInputPlaceholder}
-            className="bg-gray-50 border-none"
+            className="border-none bg-gray-50"
           />
         </div>
       )}
 
       <div className="space-y-5">
         <div>
-          <p className="font-bold mb-3">{title}</p>
-          <div className="flex flex-col gap-4 max-h-96 pr-2 overflow-auto scrollbar">
+          <p className="mb-3 font-bold">{title}</p>
+          <div className="scrollbar flex max-h-96 flex-col gap-3 overflow-auto pr-2">
             {list.map((item, index) => (
               <FilterCheckbox
                 key={`${name}-${index}`}

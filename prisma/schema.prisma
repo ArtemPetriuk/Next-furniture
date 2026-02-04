@@ -47,11 +47,24 @@ model Product {
      additionally Additionally[]
      items       ProductItem[]
 
+     description String?
+
      category   Category @relation(fields: [categoryId], references: [id])
      categoryId Int
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    filterOptions FilterOption[]
+}
+
+model FilterOption {
+  id     Int    @id @default(autoincrement())
+  name   String
+  value  String 
+  group  String[]
+
+  products Product[]
 }
 
 model Additionally {

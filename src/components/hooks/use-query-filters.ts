@@ -5,18 +5,26 @@ import { useRouter } from "next/navigation";
 
 export const useQueryFilters = (filters: Filters) => {
   const router = useRouter();
+  const isMounted = React.useRef(false);
 
   React.useEffect(() => {
-    const params = {
-      ...filters.prices,
-      opcija: Array.from(filters.opcija),
-      selected: Array.from(filters.selected),
-    };
+    if (isMounted.current) {
+        const params = {
+            ...filters.prices,
+            rooms: Array.from(filters.rooms),
+            office_zones: Array.from(filters.office_zones),
+            cafe_zones: Array.from(filters.cafe_zones),
+            hotel_zones: Array.from(filters.hotel_zones),
+          };
+      
+          const query = qs.stringify(params, {
+            arrayFormat: "comma",
+            skipNulls: true, // Не додавати пусті параметри в URL
+          });
+      
+          router.push(`?${query}`, { scroll: false });
+    }
 
-    const query = qs.stringify(params, {
-      arrayFormat: "comma",
-    });
-
-    router.replace(`?${query}`, { scroll: false });
+    isMounted.current = true;
   }, [filters, router]);
 };

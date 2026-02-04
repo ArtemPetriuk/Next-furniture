@@ -10,11 +10,17 @@ import { CartButton } from "./cart-button";
 
 interface Props {
   className?: string;
+  hasSearch?: boolean;
+  hasCart?: boolean;
 }
 
-export const Header: React.FC<Props> = ({ className }) => {
+export const Header: React.FC<Props> = ({
+  hasSearch = true,
+  hasCart = true,
+  className,
+}) => {
   return (
-    <header className={cn("border border-b", className)}>
+    <header className={cn("border-b", className)}>
       <Container className="flex items-center justify-between py-8">
         {/*left */}
         <Link href="/">
@@ -32,17 +38,19 @@ export const Header: React.FC<Props> = ({ className }) => {
               style={{ margin: 0, padding: 0, display: "inline-block" }}
             />
             <div className="inline-block" style={{ margin: 0, padding: 0 }}>
-              <h1 className="text-lg uppercase font-black">Next Furniture</h1>
-              <p className="text-sm text-gray-400 leading-3">
+              <h1 className="text-lg font-black uppercase">Next Furniture</h1>
+              <p className="text-sm leading-3 text-gray-400">
                 wygodniej się nie da
               </p>
             </div>
           </div>
         </Link>
 
-        <div className="mx-10 flex-1">
-          <SearchInput />
-        </div>
+        {hasSearch && (
+          <div className="mx-10 flex-1">
+            <SearchInput />
+          </div>
+        )}
 
         {/*right */}
         <div className="flex items-center gap-3">
@@ -51,7 +59,7 @@ export const Header: React.FC<Props> = ({ className }) => {
             Logowanie
           </Button>
 
-          <CartButton />
+          {hasCart && <CartButton />}
         </div>
       </Container>
     </header>

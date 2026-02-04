@@ -1,15 +1,16 @@
 import React from "react";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Title } from "./title";
 import { Button } from "../ui";
 import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Props {
   id: number;
   name: string;
   price: number;
   imageUrl: string;
+  description?: string;
   className?: string;
 }
 
@@ -18,30 +19,57 @@ export const ProductCard: React.FC<Props> = ({
   name,
   price,
   imageUrl,
+  description,
   className,
 }) => {
   return (
-    <div className={className}>
+    <div
+      className={cn(
+        "group h-full w-full rounded-3xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out",
+        "hover:-translate-y-2 hover:border-violet-200 hover:shadow-xl",
+        className,
+      )}
+    >
       <Link href={`/product/${id}`}>
-        <div className="flex justify-center p-6 bg-secondary rounded-lg h-[260px]">
-          <img className="w-[215px] h-[215px]" src={imageUrl} alt={name} />
+        <div className="relative flex h-[260px] items-center justify-center overflow-hidden rounded-2xl bg-[#F5F5F7]">
+          {/* 🔥 ТУТ ЗМІНИ: */}
+          {/* Було: w-[85%] h-[85%] */}
+          {/* Стало: w-[95%] h-[95%] - картинка стане більшою */}
+          <img
+            className="h-[100%] w-[100%] object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-110"
+            src={imageUrl}
+            alt={name}
+          />
         </div>
+        <div className="pt-4">
+          <Title
+            text={name}
+            size="sm"
+            className="mb-1 font-bold text-gray-900"
+          />
 
-        <Title text={name} size="sm" className="mb-1 mt-3 font-bold" />
+          <p className="line-clamp-2 h-[40px] text-sm leading-tight text-gray-400">
+            {description || "Komfort i styl na co dzień."}
+            {/* Якщо опису немає в базі, покажемо стару фразу */}
+          </p>
 
-        <p className="text-sm text-gray-400">
-          blablblablablablbalbblbal blablablblblabl
-        </p>
-
-        <div className="flex justify-between items-center mt-4">
-          <span className="text-[20px]">
-            Od <b>{price} Zl</b>
-          </span>
-
-          <Button variant="secondary" className="text-base font-bold">
-            <Plus size={20} className="mr-1" />
-            Dodaj
-          </Button>
+          <div className="mt-5 flex items-center justify-between">
+            <span className="text-[22px] font-bold text-gray-900">
+              {price}{" "}
+              <span className="text-sm font-normal text-gray-500">zł</span>
+            </span>
+            <Button
+              variant="secondary"
+              className={cn(
+                "rounded-xl font-bold transition-colors duration-300",
+                "bg-violet-50 text-violet-600",
+                "group-hover:bg-violet-600 group-hover:text-white",
+              )}
+            >
+              <Plus size={20} className="mr-1" />
+              Dodaj
+            </Button>
+          </div>
         </div>
       </Link>
     </div>

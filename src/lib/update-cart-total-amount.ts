@@ -1,4 +1,5 @@
-import prisma from "@prisma/prisma-client";
+// 👇 ВАЖЛИВО: Імпорт без дужок, але шлях до ТВОГО файлу (перевір шлях!)
+import prisma from "../../prisma/prisma-client";
 import { calcCartItemTotalPrice } from "./calc-cart-item-total-price";
 
 export const updateCartTotalAmount = async (token: string) => {
@@ -14,7 +15,7 @@ export const updateCartTotalAmount = async (token: string) => {
         include: {
           productItem: {
             include: {
-              product: true,
+              product: true, // 🔥 Це обов'язково треба залишити
             },
           },
           additionally: true,
@@ -46,7 +47,7 @@ export const updateCartTotalAmount = async (token: string) => {
         include: {
           productItem: {
             include: {
-              product: true,
+              product: true, // І тут теж
             },
           },
           additionally: true,

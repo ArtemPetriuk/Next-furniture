@@ -48,7 +48,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         loading: true,
         error: false,
         items: state.items.map((item) =>
-          item.id === id ? { ...item, disabled: true } : item
+          item.id === id ? { ...item, disabled: true } : item,
         ),
       }));
       const data = await Api.cart.removeCartItem(id);

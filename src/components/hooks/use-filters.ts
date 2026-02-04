@@ -1,45 +1,66 @@
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/router";
-import React from "react";
 import { useSet } from "react-use";
+import React, { useState } from "react";
 
 interface PriceProps {
   priceFrom?: number;
   priceTo?: number;
 }
+
 interface QueryFilters extends PriceProps {
-  opcija: string;
-  selected: string;
+  rooms: string;
+  office_zones: string;
+  cafe_zones: string;
+  hotel_zones: string;
 }
 
 export interface Filters {
-  opcija: Set<string>;
-  selected: Set<string>;
+  rooms: Set<string>;
+  office_zones: Set<string>;
+  cafe_zones: Set<string>;
+  hotel_zones: Set<string>;
   prices: PriceProps;
 }
 
 interface ReturnProps extends Filters {
   setPrices: (name: keyof PriceProps, value: number) => void;
-  setOpcija: (value: string) => void;
-  setSelectedAdditionally: (value: string) => void;
+  
+  // Методи для перемикання (галочки)
+  setRooms: (value: string) => void;
+  setOfficeZones: (value: string) => void;
+  setCafeZones: (value: string) => void;
+  setHotelZones: (value: string) => void;
+
+  // 🔥 НОВІ МЕТОДИ: Очищення списків
+  clearRooms: () => void;
+  clearOfficeZones: () => void;
+  clearCafeZones: () => void;
+  clearHotelZones: () => void;
 }
 
 export const useFilters = (): ReturnProps => {
-  const searchParams = useSearchParams() as unknown as Map<
-    keyof QueryFilters,
-    string
-  >;
+  const searchParams = useSearchParams() as unknown as Map<keyof QueryFilters, string>;
 
-  const [selected, { toggle: toggleSelected }] = useSet(
-    new Set<string>(searchParams.get("selected")?.split(","))
+  // --- 1. Створюємо Сети + дістаємо метод clear ---
+  
+  const [rooms, { toggle: toggleRooms, clear: clearRooms }] = useSet(
+    new Set<string>(searchParams.get("rooms")?.split(",") || [])
   );
 
-  const [opcija, { toggle: toggleOpcija }] = useSet(
-    new Set<string>(
-      searchParams.has("opcija") ? searchParams.get("opcija")?.split(",") : []
-    )
+  const [office_zones, { toggle: toggleOfficeZones, clear: clearOfficeZones }] = useSet(
+    new Set<string>(searchParams.get("office_zones")?.split(",") || [])
   );
-  const [prices, setPrices] = React.useState<PriceProps>({
+
+  const [cafe_zones, { toggle: toggleCafeZones, clear: clearCafeZones }] = useSet(
+    new Set<string>(searchParams.get("cafe_zones")?.split(",") || [])
+  );
+
+  const [hotel_zones, { toggle: toggleHotelZones, clear: clearHotelZones }] = useSet(
+    new Set<string>(searchParams.get("hotel_zones")?.split(",") || [])
+  );
+
+  // --- 2. Ціна ---
+  const [prices, setPrices] = useState<PriceProps>({
     priceFrom: Number(searchParams.get("priceFrom")) || undefined,
     priceTo: Number(searchParams.get("priceTo")) || undefined,
   });
@@ -53,13 +74,25 @@ export const useFilters = (): ReturnProps => {
 
   return React.useMemo(
     () => ({
-      opcija,
-      selected,
+      rooms,
+      office_zones,
+      cafe_zones,
+      hotel_zones,
       prices,
       setPrices: updatePrice,
-      setOpcija: toggleOpcija,
-      setSelectedAdditionally: toggleSelected,
+      
+      // Toggle
+      setRooms: toggleRooms,
+      setOfficeZones: toggleOfficeZones,
+      setCafeZones: toggleCafeZones,
+      setHotelZones: toggleHotelZones,
+
+      // 🔥 Clear (Експортуємо нові функції)
+      clearRooms,
+      clearOfficeZones,
+      clearCafeZones,
+      clearHotelZones,
     }),
-    [opcija, selected, prices]
+    [rooms, office_zones, cafe_zones, hotel_zones, prices]
   );
 };

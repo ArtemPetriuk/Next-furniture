@@ -1,7 +1,9 @@
-import { Prisma } from "@prisma/client";
-import prisma from "./prisma-client";
+import { PrismaClient } from "@prisma/client";
 import { hashSync } from "bcrypt";
-import { _additionally, products, categories } from "./constants";
+// 🔥 Додаємо filterOptions в імпорт
+import { _additionally, products, categories,filterOptions  } from "./constants";
+
+const prisma = new PrismaClient();
 
 interface CategoryAdditionallyMap {
   [key: number]: number[];
@@ -11,14 +13,12 @@ const randomDecimalNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min) * 10 + min * 10) / 10;
 };
 
-// Нова функція для обробки опцій з цінами
 const processProductOptions = (options: string | null) => {
   if (!options) return [];
 
   try {
     const parsedOptions = JSON.parse(options);
 
-    // Якщо це масив об'єктів з name та price
     if (
       Array.isArray(parsedOptions) &&
       parsedOptions[0]?.name &&
@@ -30,7 +30,6 @@ const processProductOptions = (options: string | null) => {
       }));
     }
 
-    // Якщо це просто масив рядків (для зворотної сумісності)
     if (Array.isArray(parsedOptions)) {
       return parsedOptions.map((option: string) => ({
         name: option,
@@ -45,7 +44,7 @@ const processProductOptions = (options: string | null) => {
 };
 
 async function up() {
-  // Створення користувачів
+  // 1. Користувачі
   await prisma.user.createMany({
     data: [
       {
@@ -65,17 +64,24 @@ async function up() {
     ],
   });
 
-  // Створення категорій
+  // 2. Категорії
   await prisma.category.createMany({
     data: categories,
   });
 
-  // Створення додаткових опцій
+  // 3. Додаткові опції
   await prisma.additionally.createMany({
     data: _additionally,
   });
 
-  // Мапа додаткових опцій
+  // 🔥 4. ФІЛЬТРИ (Тепер беремо з constants.ts)
+  await prisma.filterOption.createMany({
+    data: filterOptions,
+  });
+
+  // Отримуємо створені фільтри з ID
+  const allFilters = await prisma.filterOption.findMany();
+
   const categoryAdditionallyMap: CategoryAdditionallyMap = {
     1: [1, 2, 3, 4], // Дивани
     2: [5, 6, 7], // Столи
@@ -86,26 +92,44 @@ async function up() {
     7: [12, 13, 14, 15], // Садові меблі
   };
 
-  // Створення продуктів
+ // 5. ПРОДУКТИ
   const createdProducts = await Promise.all(
     products.map(async (product) => {
-      const additionallyIds = categoryAdditionallyMap[product.categoryId] || [];
+      // @ts-ignore
+      const tags = product._filterTags || []; 
+      const categoryId = product.categoryId;
+
+      const connectFilters = allFilters
+        .filter((f) => tags.includes(f.value))
+        .map((f) => ({ id: f.id }));
+
+      const additionallyIds = categoryAdditionallyMap[categoryId] || [];
 
       return prisma.product.create({
         data: {
           name: product.name,
           imageUrl: product.imageUrl,
           categoryId: product.categoryId,
-          options: product.options || null,
+
+          // 🔥 ДОДАЙ ЦЕЙ РЯДОК:
+    // @ts-ignore (бо в типі products в constants.ts цього поля може ще не бути в типах TS)
+    description: product.description || "Brak opisu",
+          
+          // 🔥 ВИПРАВЛЕННЯ: Просто передаємо рядок, без JSON.parse
+          options: product.options || undefined, 
+
           additionally: {
             connect: additionallyIds.map((id) => ({ id })),
+          },
+          filterOptions: {
+            connect: connectFilters,
           },
         },
       });
     })
   );
 
-  // Створення варіантів продуктів (ProductItem) з цінами
+  // 6. Варіанти (ProductItems)
   for (const product of createdProducts) {
     const optionsWithPrices = processProductOptions(product.options);
 
@@ -118,34 +142,24 @@ async function up() {
         })),
       });
     } else {
-      // Якщо опцій немає, створюємо один продукт з випадковою ціною
       await prisma.productItem.create({
         data: {
           productId: product.id,
           price: randomDecimalNumber(500, 5000),
-          options: product.options, // або просто null, якщо ви хочете
+          options: product.options,
         },
       });
     }
   }
 
-  // Створення кошиків
+  // 7. Кошики
   await prisma.cart.createMany({
     data: [
-      {
-        userId: 1,
-        totalAmount: 0,
-        token: "11111",
-      },
-      {
-        userId: 2,
-        totalAmount: 0,
-        token: "222222",
-      },
+      { userId: 1, totalAmount: 0, token: "11111" },
+      { userId: 2, totalAmount: 0, token: "222222" },
     ],
   });
 
-  // Додаємо товари до кошика (для тестування)
   await prisma.cartItem.create({
     data: {
       productItemId: 1,
@@ -166,16 +180,17 @@ async function down() {
   await prisma.$executeRaw`TRUNCATE TABLE "Additionally" RESTART IDENTITY CASCADE`;
   await prisma.$executeRaw`TRUNCATE TABLE "Product" RESTART IDENTITY CASCADE`;
   await prisma.$executeRaw`TRUNCATE TABLE "ProductItem" RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE "FilterOption" RESTART IDENTITY CASCADE`;
 }
 
 async function main() {
   try {
     await down();
-    console.log("Базу даних очищено");
+    console.log("🗑️  Базу даних очищено");
     await up();
-    console.log("Базу даних успішно заповнено");
+    console.log("✅ Базу даних успішно заповнено з constants.ts!");
   } catch (e) {
-    console.error("Помилка при заповненні бази даних:", e);
+    console.error("❌ Помилка:", e);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

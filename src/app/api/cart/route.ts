@@ -1,9 +1,11 @@
-import prisma from "@prisma/prisma-client";
+import prisma from "../../../../prisma/prisma-client";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { findOrCreateCart } from "@/lib/find-or-create-cart";
 import { CreateCartItemValues } from "@/components/shared/services/dto/cart.dto";
 import { updateCartTotalAmount } from "@/lib/update-cart-total-amount";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
@@ -43,7 +45,7 @@ export async function GET(req: NextRequest) {
     console.error("Cart error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -61,16 +63,26 @@ export async function POST(req: NextRequest) {
 
     const userCart = await findOrCreateCart(token);
 
-    const findCartItem = await prisma.cartItem.findFirst({
+    // Get all cart items for this product to manually check additionally match
+    const cartItemsForProduct = await prisma.cartItem.findMany({
       where: {
         cartId: userCart.id,
         productItemId: data.productItemId,
-        additionally: {
-          every: {
-            id: { in: data.additionally },
-          },
-        },
       },
+      include: {
+        additionally: true,
+      },
+    });
+
+    // Find exact match: same productItemId and exact same additionally items
+    const additionallyIds = data.additionally || [];
+    const findCartItem = cartItemsForProduct.find((item) => {
+      const itemAdditionallyIds = item.additionally.map((a) => a.id).sort();
+      const newAdditionallyIds = additionallyIds.sort();
+      return (
+        itemAdditionallyIds.length === newAdditionallyIds.length &&
+        itemAdditionallyIds.every((id, idx) => id === newAdditionallyIds[idx])
+      );
     });
 
     // if item found add +1
@@ -103,7 +115,7 @@ export async function POST(req: NextRequest) {
     console.log("[CART_POST] Server error", error);
     return NextResponse.json(
       { message: "Nie udało się utworzyć koszyka" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

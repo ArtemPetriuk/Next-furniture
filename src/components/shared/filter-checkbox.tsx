@@ -1,7 +1,8 @@
-import React from "react";
-import { Checkbox } from "../ui/checkbox";
+import React from 'react';
+import { Checkbox } from '../ui/checkbox';
+import { cn } from '@/lib/utils';
 
-export interface FilterChecboxProps {
+export interface FilterCheckboxProps {
   text: string;
   value: string;
   endAdornment?: React.ReactNode;
@@ -10,7 +11,7 @@ export interface FilterChecboxProps {
   name?: string;
 }
 
-export const FilterCheckbox: React.FC<FilterChecboxProps> = ({
+export const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   text,
   value,
   endAdornment,
@@ -19,21 +20,30 @@ export const FilterCheckbox: React.FC<FilterChecboxProps> = ({
   name,
 }) => {
   return (
-    <div className="flex items-center space-x-2">
+    <label
+      className={cn(
+        "group flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+        checked 
+          ? "bg-violet-50 border-violet-500 shadow-sm" 
+          : "bg-white border-transparent hover:bg-gray-50 hover:border-gray-200"
+      )}
+      htmlFor={`checkbox-${String(name)}-${String(value)}`}
+    >
       <Checkbox
         onCheckedChange={onCheckedChange}
         checked={checked}
         value={value}
-        className="rounded-[8px] w-6 h-6"
+        className="rounded-[6px] w-5 h-5 flex-shrink-0"
         id={`checkbox-${String(name)}-${String(value)}`}
       />
-      <label
-        htmlFor={`checkbox-${String(name)}-${String(value)}`}
-        className="leading-none cursor-pointer flex-1"
-      >
+      <span className={cn(
+        "text-sm leading-tight flex-1", 
+        checked ? "font-semibold text-violet-800" : "text-gray-600 group-hover:text-gray-900"
+      )}>
         {text}
-      </label>
+      </span>
+      
       {endAdornment}
-    </div>
+    </label>
   );
 };

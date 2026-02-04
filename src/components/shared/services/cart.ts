@@ -7,7 +7,7 @@ export const getCart = async (): Promise<CartDTO> => {
 
 export const updateItemQuantity = async (
   itemId: number,
-  quantity: number
+  quantity: number,
 ): Promise<CartDTO> => {
   return (await axiosInstance.patch<CartDTO>("/cart/" + itemId, { quantity }))
     .data;
@@ -18,7 +18,7 @@ export const removeCartItem = async (id: number): Promise<CartDTO> => {
 };
 
 export const addCartItem = async (
-  values: CreateCartItemValues
+  values: CreateCartItemValues,
 ): Promise<CartDTO> => {
   return (await axiosInstance.post<CartDTO>("/cart", values)).data;
 };

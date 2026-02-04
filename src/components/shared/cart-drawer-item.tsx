@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Additionally } from "@prisma/client";
 
 import * as CartItem from "./cart-item-details";
 import { CartItemProps } from "./cart-item-details/cart-item-details.types";
@@ -12,6 +13,8 @@ interface Props extends CartItemProps {
   className?: string;
   onClickCountButton?: (type: "plus" | "minus") => void;
   onClickRemove?: () => void;
+  additionally?: Additionally[];
+  variantTitle?: string;
 }
 
 export const CartDrawerItem: React.FC<Props> = ({
@@ -24,21 +27,28 @@ export const CartDrawerItem: React.FC<Props> = ({
   className,
   onClickRemove,
   onClickCountButton,
+  additionally,
+  variantTitle,
 }) => {
+  const additionallyPrice = additionally
+    ? additionally.reduce((sum, item) => sum + item.price, 0)
+    : 0;
+  const totalPrice = (price + additionallyPrice) * quantity;
+
   return (
     <div
       className={cn(
-        "flex bg-white p-5 gap-6",
+        "flex gap-6 bg-white p-5",
         {
-          "opacity-50 pointer-events-none": disabled,
+          "pointer-events-none opacity-50": disabled,
         },
-        className
+        className,
       )}
     >
       <CartItem.Image src={imageUrl} />
 
       <div className="flex-1">
-        <CartItem.Info name={name} details={details} />
+        <CartItem.Info name={name} details={details} variant={variantTitle} />
 
         <hr className="my-3" />
 
@@ -46,10 +56,10 @@ export const CartDrawerItem: React.FC<Props> = ({
           <CountButton onClick={onClickCountButton} value={quantity} />
 
           <div className="flex items-center gap-3">
-            <CartItem.Price value={price} />
+            <CartItem.Price value={totalPrice} />
             <Trash2Icon
               onClick={onClickRemove}
-              className="text-gray-400 cursor-pointer hover:text-gray-600"
+              className="cursor-pointer text-gray-400 hover:text-gray-600"
               size={16}
             />
           </div>
