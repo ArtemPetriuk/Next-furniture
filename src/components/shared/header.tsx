@@ -1,12 +1,16 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/shared/container";
 import Image from "next/image";
 import { Button } from "../ui";
-import { ArrowRight, ShoppingCart, User } from "lucide-react";
+import { User, CircleUser } from "lucide-react"; // Додав іконку для залогіненого юзера
 import Link from "next/link";
 import { SearchInput } from "./search-input";
 import { CartButton } from "./cart-button";
+import { AuthModal } from "./modals/auth-modal";
+import { useSession } from "next-auth/react"; // 👈 Імпорт для перевірки сесії
 
 interface Props {
   className?: string;
@@ -19,15 +23,17 @@ export const Header: React.FC<Props> = ({
   hasCart = true,
   className,
 }) => {
+  const [openAuthModal, setOpenAuthModal] = useState(false);
+
+  // 👇 Отримуємо дані про сесію (залогінений чи ні)
+  const { data: session, status } = useSession();
+
   return (
     <header className={cn("border-b", className)}>
       <Container className="flex items-center justify-between py-8">
-        {/*left */}
+        {/* --- Логотип --- */}
         <Link href="/">
-          <div
-            className="flex items-center space-x-0"
-            style={{ margin: 0, padding: 0 }}
-          >
+          <div className="flex items-center space-x-0">
             <Image
               src="/images/logo1.png"
               alt="Logo"
@@ -35,9 +41,8 @@ export const Header: React.FC<Props> = ({
               height={65}
               priority
               className="inline-block"
-              style={{ margin: 0, padding: 0, display: "inline-block" }}
             />
-            <div className="inline-block" style={{ margin: 0, padding: 0 }}>
+            <div className="inline-block">
               <h1 className="text-lg font-black uppercase">Next Furniture</h1>
               <p className="text-sm leading-3 text-gray-400">
                 wygodniej się nie da
@@ -46,18 +51,48 @@ export const Header: React.FC<Props> = ({
           </div>
         </Link>
 
+        {/* --- Пошук --- */}
         {hasSearch && (
           <div className="mx-10 flex-1">
             <SearchInput />
           </div>
         )}
 
-        {/*right */}
+        {/* --- Права частина --- */}
         <div className="flex items-center gap-3">
-          <Button variant={"outline"} className="flex items-center gap-1">
-            <User size={16} />
-            Logowanie
-          </Button>
+          {/* 👇 ЛОГІКА ВІДОБРАЖЕННЯ КНОПКИ */}
+          {status !== "loading" && (
+            <>
+              {session?.user ? (
+                // 🟢 Якщо УВІЙШОВ: Показуємо ім'я та посилання на профіль
+                <Link href="/profile">
+                  <Button
+                    variant="secondary"
+                    className="flex items-center gap-2"
+                  >
+                    <CircleUser size={18} />
+                    {session.user.name || "Профіль"}
+                  </Button>
+                </Link>
+              ) : (
+                // 🔴 Якщо ГІСТЬ: Показуємо кнопку входу
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-1"
+                  onClick={() => setOpenAuthModal(true)}
+                >
+                  <User size={16} />
+                  Logowanie
+                </Button>
+              )}
+            </>
+          )}
+
+          {/* Модальне вікно (воно невидиме, поки openAuthModal = false) */}
+          <AuthModal
+            open={openAuthModal}
+            onClose={() => setOpenAuthModal(false)}
+          />
 
           {hasCart && <CartButton />}
         </div>

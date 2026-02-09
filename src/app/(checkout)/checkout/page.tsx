@@ -10,6 +10,8 @@ import {
 
 import { Container } from "@/components/shared/container";
 import { useCartStore } from "@/components/shared/store/cart";
+import { createOrder } from "@/services/orders";
+import { toast } from "sonner";
 
 // 👇 Імпортуємо наші нові компоненти
 import { CheckoutCart } from "@/components/shared/checkout/checkout-cart";
@@ -28,6 +30,7 @@ export default function CheckoutPage() {
   } = useCartStore((state) => state);
   const [isMontageEnabled, setIsMontageEnabled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
@@ -46,12 +49,22 @@ export default function CheckoutPage() {
     fetchCartItems();
   }, [fetchCartItems]);
 
-  const onSubmit: SubmitHandler<CheckoutFormValues> = (data) => {
-    console.log("Order Data:", data);
-    console.log("Cart Items:", items);
-    console.log("Is Montage:", isMontageEnabled);
-    // Тут робиш Api.orders.create(...)
-    alert("Zamówienie zostało złożone!");
+  const onSubmit: SubmitHandler<CheckoutFormValues> = async (data) => {
+    try {
+      setSubmitting(true);
+
+      const result = await createOrder(data); // ✅ Використовуємо імпорт!
+
+      toast.success("Замовлення успішно оформлено! ID: " + result.orderId);
+
+      // Тут можна додати очистку кошика або редірект
+      // router.push("/success");
+    } catch (error) {
+      console.error(error);
+      toast.error("Не вдалося створити замовлення");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const onClickCountButton = (
