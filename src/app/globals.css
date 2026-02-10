@@ -77,6 +77,10 @@ html {
   width: 4px;
 }
 
+body {
+  overflow-x: hidden;
+}
+
 .scrollbar::-webkit-scrollbar-track {
   border-radius: 6px;
   background: #fff;
@@ -101,11 +105,11 @@ html {
   * {
     @apply border-border;
   }
-body {
-  /* Прохолодний сірий */
-  background-color: #F1F5F9;
-  color: #0f172a;
-}
+  body {
+    /* Прохолодний сірий */
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
 }
 
 #nprogress .bar {
@@ -117,7 +121,7 @@ body {
 }
 
 #nprogress .spinner-icon {
-  @apply border-t-primary border-l-primary !important;
+  @apply border-l-primary border-t-primary !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

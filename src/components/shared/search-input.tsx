@@ -44,20 +44,26 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
 
   return (
     <>
+      {/* ВИПРАВЛЕННЯ БЛЮРУ:
+         1. bg-black/50 -> bg-black/30 (менш темний)
+         2. backdrop-blur-sm -> backdrop-blur-[2px] (дуже легке розмиття)
+      */}
       {focused && (
-        <div className="fixed bottom-0 left-0 right-0 top-0 z-30 bg-black/50" />
+        <div className="fixed inset-0 z-30 bg-black/30 backdrop-blur-[2px] transition-all duration-200" />
       )}
 
       <div
         ref={ref}
         className={cn(
-          "relative z-30 flex h-11 flex-1 justify-between rounded-2xl",
+          // ВИПРАВЛЕННЯ ВИСОТИ: h-11 -> h-12
+          "relative z-40 flex h-12 flex-1 justify-between rounded-2xl transition-all duration-300",
           className,
         )}
       >
-        <Search className="absolute left-3 top-1/2 h-5 translate-y-[-50%] text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+
         <input
-          className="bg-gray-150 w-full rounded-2xl pl-11 outline-none"
+          className="h-full w-full rounded-2xl bg-gray-50 pl-11 text-base text-black outline-none transition-all duration-200 placeholder:text-gray-400 focus:bg-white focus:shadow-md focus:ring-1 focus:ring-primary/20"
           type="text"
           placeholder="Szukaj..."
           value={searchQuery}
@@ -65,31 +71,41 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
           onFocus={() => setFocused(true)}
         />
 
+        {/* Випадаючий список */}
         <div
           className={cn(
-            "invisible absolute top-14 z-30 w-full rounded-xl bg-white py-2 opacity-0 shadow-md transition-all duration-200",
-            focused && "visible top-12 opacity-100",
+            "invisible absolute left-0 top-14 z-30 w-full translate-y-2 overflow-hidden rounded-2xl bg-white opacity-0 shadow-2xl transition-all duration-200",
+            focused && "visible top-[calc(100%+4px)] translate-y-0 opacity-100",
           )}
         >
           {products.length > 0 ? (
-            products.map((product) => (
-              <Link
-                onClick={onClickItem}
-                key={product.id}
-                className="flex w-full items-center gap-3 px-3 py-2 hover:bg-primary/10"
-                href={`/product/${product.id}`}
-              >
-                <img
-                  className="h-8 w-8 rounded-sm"
-                  src={product.imageUrl}
-                  alt={product.name}
-                />
-                <span>{product.name}</span>
-              </Link>
-            ))
+            <div className="flex flex-col py-2">
+              {products.map((product) => (
+                <Link
+                  onClick={onClickItem}
+                  key={product.id}
+                  className="flex w-full items-center gap-4 px-4 py-3 transition-colors hover:bg-gray-50"
+                  href={`/product/${product.id}`}
+                >
+                  <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                    <img
+                      className="h-full w-full object-cover"
+                      src={product.imageUrl}
+                      alt={product.name}
+                    />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium leading-tight text-gray-900">
+                      {product.name}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           ) : (
-            <div className="px-3 py-2 text-gray-500">
-              {searchQuery ? "No results found" : "Start typing to search"}
+            <div className="px-4 py-4 text-center text-sm text-gray-500">
+              {searchQuery ? "Brak wyników" : "Wpisz nazwę towaru..."}
             </div>
           )}
         </div>
