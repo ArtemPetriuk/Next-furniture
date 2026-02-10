@@ -1,28 +1,36 @@
-import { Cart } from "@prisma/client";
+import {
+  Cart,
+  CartItem,
+  Additionally,
+  Product,
+  ProductItem,
+} from "@prisma/client";
 
 export type CartStateItem = {
-  additionally: {
-    name: string;
-    id: number;
-    price: number;
-    imageUrl: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }[];
   id: number;
   quantity: number;
   name: string;
   imageUrl: string;
   price: number;
   disabled?: boolean;
-  variantTitle?: string;
 
-  // 👇 ДОДАЄМО ЦЕ, щоб твій CheckoutPage не ламався
-  productItem: {
+  // Повертаємо масив додатків
+  additionally: Array<{
+    name: string;
     price: number;
+  }>;
+
+  // 👇 ГОЛОВНЕ ВИПРАВЛЕННЯ ТУТ
+  productItem: {
+    id: number;
+    price: number;
+    // Додаємо options сюди, щоб TypeScript не сварився
+    options?: string | null;
     product: {
+      id: number;
       name: string;
       imageUrl: string;
+      slug: string;
     };
   };
 };
@@ -40,17 +48,25 @@ export const getCartDetails = (data: any): ReturnProps => {
     imageUrl: item.productItem.product.imageUrl,
     name: item.productItem.product.name,
     disabled: false,
-    additionally: item.additionally,
-    variantTitle: item.productItem.options,
 
-    // 👇 ВАЖЛИВО: Передаємо вкладений об'єкт далі,
-    // бо в компоненті ти звертаєшся до item.productItem.product
+    // Мапимо додатки
+    additionally: item.additionally.map((ingredient: any) => ({
+      name: ingredient.name,
+      price: ingredient.price,
+    })),
+
+    // 👇 ВАЖЛИВО: Передаємо структуру так, як її чекають компоненти
     productItem: {
+      id: item.productItem.id,
       price: item.productItem.price,
       product: {
+        id: item.productItem.product.id,
         name: item.productItem.product.name,
         imageUrl: item.productItem.product.imageUrl,
+        slug: item.productItem.product.slug,
       },
+      // Ось тут ми передаємо варіант (колір/розмір) з бази в компонент
+      options: item.productItem.options,
     },
   })) as CartStateItem[];
 

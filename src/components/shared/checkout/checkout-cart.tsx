@@ -3,6 +3,8 @@ import { Minus, Plus, X, Info } from "lucide-react";
 import { CheckoutItemSkeleton } from "./checkout-item-skeleton";
 import { CartStateItem } from "@/lib/get-cart-details";
 import { cn } from "@/lib/utils";
+import { getCartItemDetails } from "@/lib/get-cart-items-details"; // 👈 1. Імпорт функції
+import { Additionally } from "@prisma/client"; // 👈 2. Імпорт типу
 
 const MONTAGE_PRICE = 499;
 
@@ -36,92 +38,108 @@ export const CheckoutCart: React.FC<Props> = ({
         className,
       )}
     >
-      {/* 👇 ЗМІНА ТУТ: Показуємо скелетони ТІЛЬКИ якщо вантажиться І товарів ще немає */}
       {loading && items.length === 0 ? (
-        // Можна взагалі прибрати цей масив скелетонів, якщо хочеш,
-        // але для першого входу краще залишити (воно гарно виглядає 1 раз).
         [...Array(3)].map((_, index) => <CheckoutItemSkeleton key={index} />)
       ) : items.length > 0 ? (
-        items.map((item) => (
-          <div
-            key={item.id}
-            className={cn(
-              "relative flex flex-col gap-6 border-b border-gray-100 p-6 transition-colors last:border-0 sm:flex-row",
-              // 👇 Додаємо цей ефект: якщо йде оновлення (loading), робимо список напівпрозорим
-              loading
-                ? "pointer-events-none opacity-50"
-                : "hover:bg-gray-50/30",
-            )}
-          >
-            {/* ... (Весь твій код картки товару без змін) ... */}
+        items.map((item) => {
+          // Рахуємо ціну
+          const optionsPrice =
+            item.additionally?.reduce((acc, opt) => acc + opt.price, 0) || 0;
+          const singleItemPrice = item.productItem.price + optionsPrice;
+          const totalLinePrice = singleItemPrice * item.quantity;
 
-            <button
-              type="button"
-              onClick={() => removeCartItem(item.id)}
-              className="absolute right-4 top-4 text-gray-400 transition-colors hover:text-red-500 sm:hidden"
+          // 👇 3. ГЕНЕРУЄМО ОПИС (Варіант + Додатки)
+          // Використовуємо ту саму функцію, що і в CartDrawer!
+          const details = getCartItemDetails(
+            item.additionally as Additionally[],
+            item.productItem.options,
+          );
+
+          return (
+            <div
+              key={item.id}
+              className={cn(
+                "relative flex flex-col gap-6 border-b border-gray-100 p-6 transition-colors last:border-0 sm:flex-row",
+                loading
+                  ? "pointer-events-none opacity-50"
+                  : "hover:bg-gray-50/30",
+              )}
             >
-              <X size={20} />
-            </button>
-
-            <div className="relative h-[100px] w-[140px] shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
-              <img
-                src={item.productItem?.product?.imageUrl}
-                alt={item.productItem?.product?.name}
-                className="h-full w-full object-cover mix-blend-multiply"
-              />
-            </div>
-
-            <div className="flex flex-1 flex-col justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  {item.productItem?.product?.name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {item.productItem?.price} zł / szt.
-                </p>
+              <div className="relative h-[100px] w-[140px] shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
+                <img
+                  src={item.productItem?.product?.imageUrl}
+                  alt={item.productItem?.product?.name}
+                  className="h-full w-full object-cover mix-blend-multiply"
+                />
               </div>
 
-              <div className="mt-4 flex items-center justify-between sm:mt-0">
-                <div className="flex items-center gap-3 rounded-lg border border-gray-200 px-2 py-1">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onClickCountButton(item.id, item.quantity, "minus")
-                    }
-                    disabled={item.quantity <= 1}
-                    className="p-1 transition-colors hover:text-primary disabled:text-gray-300"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-4 text-center text-sm font-bold">
-                    {item.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onClickCountButton(item.id, item.quantity, "plus")
-                    }
-                    className="p-1 transition-colors hover:text-primary"
-                  >
-                    <Plus size={14} />
-                  </button>
+              <div className="flex flex-1 flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {item.productItem?.product?.name}
+                  </h3>
+
+                  {/* 👇 4. ВИВОДИМО ЦЕЙ РЯДОК */}
+                  {/* Якщо є деталі (варіант або додатки), показуємо їх */}
+                  {details && (
+                    <p className="mt-1 text-sm text-gray-500">{details}</p>
+                  )}
+
+                  <p className="mt-2 text-sm font-medium text-gray-400">
+                    {singleItemPrice} zł / szt.
+                  </p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-lg font-bold">
-                    {item.productItem?.price * item.quantity} zł
+
+                <div className="mt-4 flex items-center justify-between sm:mt-0">
+                  <div className="flex items-center gap-3 rounded-lg border border-gray-200 px-2 py-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onClickCountButton(item.id, item.quantity, "minus")
+                      }
+                      disabled={item.quantity <= 1}
+                      className="p-1 transition-colors hover:text-primary disabled:text-gray-300"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-4 text-center text-sm font-bold">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onClickCountButton(item.id, item.quantity, "plus")
+                      }
+                      className="p-1 transition-colors hover:text-primary"
+                    >
+                      <Plus size={14} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeCartItem(item.id)}
-                    className="hidden text-gray-300 transition-colors hover:text-red-500 sm:block"
-                  >
-                    <X size={20} />
-                  </button>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-lg font-bold">{totalLinePrice} zł</div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeCartItem(item.id)}
+                      className="hidden text-gray-300 transition-colors hover:text-red-500 sm:block"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => removeCartItem(item.id)}
+                className="absolute right-4 top-4 text-gray-400 transition-colors hover:text-red-500 sm:hidden"
+              >
+                <X size={20} />
+              </button>
             </div>
-          </div>
-        ))
+          );
+        })
       ) : (
         <div className="p-10 text-center text-gray-500">
           Twój koszyk jest pusty.
@@ -136,7 +154,6 @@ export const CheckoutCart: React.FC<Props> = ({
             loading && "pointer-events-none opacity-50",
           )}
         >
-          {/* ... (Твій код монтажу без змін) ... */}
           <div className="flex items-start gap-3">
             <div className="mt-1 text-primary">
               <Info size={20} />

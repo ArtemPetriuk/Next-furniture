@@ -14,7 +14,6 @@ interface Props extends CartItemProps {
   onClickCountButton?: (type: "plus" | "minus") => void;
   onClickRemove?: () => void;
   additionally?: Additionally[];
-  variantTitle?: string;
 }
 
 export const CartDrawerItem: React.FC<Props> = ({
@@ -28,7 +27,6 @@ export const CartDrawerItem: React.FC<Props> = ({
   onClickRemove,
   onClickCountButton,
   additionally,
-  variantTitle,
 }) => {
   const additionallyPrice = additionally
     ? additionally.reduce((sum, item) => sum + item.price, 0)
@@ -48,7 +46,7 @@ export const CartDrawerItem: React.FC<Props> = ({
       <CartItem.Image src={imageUrl} />
 
       <div className="flex-1">
-        <CartItem.Info name={name} details={details} variant={variantTitle} />
+        <CartItem.Info name={name} details={details} />
 
         <hr className="my-3" />
 

@@ -4,13 +4,11 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/shared/container";
 import Image from "next/image";
-import { Button } from "../ui";
-import { User, CircleUser } from "lucide-react"; // Додав іконку для залогіненого юзера
 import Link from "next/link";
 import { SearchInput } from "./search-input";
 import { CartButton } from "./cart-button";
 import { AuthModal } from "./modals/auth-modal";
-import { useSession } from "next-auth/react"; // 👈 Імпорт для перевірки сесії
+import { ProfileButton } from "./profile-button"; // 👈 Імпорт нового компонента
 
 interface Props {
   className?: string;
@@ -25,13 +23,10 @@ export const Header: React.FC<Props> = ({
 }) => {
   const [openAuthModal, setOpenAuthModal] = useState(false);
 
-  // 👇 Отримуємо дані про сесію (залогінений чи ні)
-  const { data: session, status } = useSession();
-
   return (
     <header className={cn("border-b", className)}>
       <Container className="flex items-center justify-between py-8">
-        {/* --- Логотип --- */}
+        {/* Логотип */}
         <Link href="/">
           <div className="flex items-center space-x-0">
             <Image
@@ -51,48 +46,22 @@ export const Header: React.FC<Props> = ({
           </div>
         </Link>
 
-        {/* --- Пошук --- */}
+        {/* Пошук */}
         {hasSearch && (
           <div className="mx-10 flex-1">
             <SearchInput />
           </div>
         )}
 
-        {/* --- Права частина --- */}
+        {/* Права частина */}
         <div className="flex items-center gap-3">
-          {/* 👇 ЛОГІКА ВІДОБРАЖЕННЯ КНОПКИ */}
-          {status !== "loading" && (
-            <>
-              {session?.user ? (
-                // 🟢 Якщо УВІЙШОВ: Показуємо ім'я та посилання на профіль
-                <Link href="/profile">
-                  <Button
-                    variant="secondary"
-                    className="flex items-center gap-2"
-                  >
-                    <CircleUser size={18} />
-                    {session.user.name || "Профіль"}
-                  </Button>
-                </Link>
-              ) : (
-                // 🔴 Якщо ГІСТЬ: Показуємо кнопку входу
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-1"
-                  onClick={() => setOpenAuthModal(true)}
-                >
-                  <User size={16} />
-                  Logowanie
-                </Button>
-              )}
-            </>
-          )}
-
-          {/* Модальне вікно (воно невидиме, поки openAuthModal = false) */}
+          {/* 👇 ТУТ ТЕПЕР ЧИСТО І ГАРНО */}
           <AuthModal
             open={openAuthModal}
             onClose={() => setOpenAuthModal(false)}
           />
+
+          <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
 
           {hasCart && <CartButton />}
         </div>

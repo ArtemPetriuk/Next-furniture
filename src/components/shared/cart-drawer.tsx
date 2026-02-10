@@ -104,13 +104,13 @@ export const CartDrawer: React.FC<React.PropsWithChildren> = ({ children }) => {
                       imageUrl={item.imageUrl}
                       details={getCartItemDetails(
                         item.additionally as Additionally[],
+                        item.productItem.options,
                       )}
                       disabled={item.disabled}
                       name={item.name}
                       price={item.price}
                       quantity={item.quantity}
                       additionally={item.additionally as Additionally[]}
-                      variantTitle={item.variantTitle}
                       onClickCountButton={(type) =>
                         onClickCountButton(item.id, item.quantity, type)
                       }
