@@ -34,10 +34,12 @@ export const RegisterForm: React.FC<Props> = ({ onClose }) => {
         throw Error();
       }
 
-      toast.success("Реєстрація успішна! Тепер увійдіть.");
+      toast.success("registracja zakończona sukcesem!"); // Успішна реєстрація
       onClose?.();
     } catch (error) {
-      toast.error("Не вдалося зареєструватися. Можливо, пошта зайнята.");
+      toast.error(
+        "Nie udało się zarejestrować. Możliwe, że email jest zajęty.",
+      );
     }
   };
 
@@ -48,9 +50,9 @@ export const RegisterForm: React.FC<Props> = ({ onClose }) => {
     >
       <div className="flex items-center justify-between">
         <div className="mr-2">
-          <h2 className="text-2xl font-bold">Реєстрація</h2>
+          <h2 className="text-2xl font-bold">Rejestracja</h2>
           <p className="text-gray-400">
-            Створіть акаунт, щоб зберігати історію
+            Stwórz konto, aby zapisywać historię zakupów
           </p>
         </div>
       </div>
@@ -62,16 +64,16 @@ export const RegisterForm: React.FC<Props> = ({ onClose }) => {
       />
       <Input
         {...form.register("fullName", { required: true })}
-        placeholder="Повне ім'я"
+        placeholder="Pełne imię"
       />
       <Input
         {...form.register("password", { required: true })}
-        placeholder="Пароль"
+        placeholder="Hasło"
         type="password"
       />
       <Input
         {...form.register("confirmPassword", { required: true })}
-        placeholder="Підтвердіть пароль"
+        placeholder="Potwierdź hasło"
         type="password"
       />
 
@@ -80,7 +82,7 @@ export const RegisterForm: React.FC<Props> = ({ onClose }) => {
         className="h-12 text-base font-bold"
         type="submit"
       >
-        Зареєструватися
+        Zarejestruj się
       </Button>
     </form>
   );

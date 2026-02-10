@@ -18,8 +18,9 @@ interface Props {
   onSubmit: (itemId: number, additionally: number[]) => void;
   className?: string;
   options?: any;
+  id: number;
   // 🔥 1. Додаємо проп для опису
-  description?: string | null; 
+  description?: string | null;
 }
 
 type ProductOption = {
@@ -37,8 +38,9 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
   className,
   options,
   additionally = [],
+  id,
   // 🔥 2. Приймаємо його тут
-  description, 
+  description,
 }) => {
   // 🔥 3. Використовуємо опис з бази, або стандартний текст, якщо опису немає
   const textDetails = description || "Komfort i styl na co dzień";
@@ -60,15 +62,14 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
 
       if (Array.isArray(optionsData)) {
         parsed = optionsData;
-      } 
-      else if (typeof optionsData === "string") {
+      } else if (typeof optionsData === "string") {
         parsed = JSON.parse(optionsData);
-      }
-      else if (typeof optionsData === "object") {
-         parsed = Object.values(optionsData);
+      } else if (typeof optionsData === "object") {
+        parsed = Object.values(optionsData);
       }
 
-      return parsed.map((option: any) => {
+      return parsed
+        .map((option: any) => {
           if (typeof option === "string") {
             return {
               name: option,
@@ -92,10 +93,11 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
   };
 
   const parsedOptions = React.useMemo(() => parseOptions(options), [options]);
-  
+
   // Якщо варіантів немає або ще не вибрано - беремо ціну першого item
   const firstItemPrice = items[0]?.price || 0;
-  const [selectedVariantPrice, setSelectedVariantPrice] = React.useState<number>(firstItemPrice);
+  const [selectedVariantPrice, setSelectedVariantPrice] =
+    React.useState<number>(firstItemPrice);
 
   React.useEffect(() => {
     if (parsedOptions.length > 0) {
@@ -108,9 +110,9 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
         if (firstOption.price) setSelectedVariantPrice(firstOption.price);
       }
     } else {
-        if (items.length > 0) {
-            setSelectedVariantPrice(items[0].price);
-        }
+      if (items.length > 0) {
+        setSelectedVariantPrice(items[0].price);
+      }
     }
   }, [parsedOptions, selectedOption, handleOptionSelect, items]);
 
@@ -134,40 +136,45 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
 
   const handleSubmit = () => {
     const finalItemId = currentItemId || items[0]?.id;
-    
+
     if (finalItemId) {
       onSubmit(finalItemId, Array.from(selectedAdditionally));
     } else {
-        console.error("Немає ID товару!");
+      console.error("Немає ID товару!");
     }
   };
 
   return (
-    <div className={cn(className, "flex flex-1 h-auto min-h-[500px]")}>
-      
+    <div className={cn(className, "flex h-auto min-h-[500px] flex-1")}>
       {/* ЛІВА ЧАСТИНА (ФОТО) */}
-      <div className="w-[50%] bg-[#F5F5F7] rounded-l-3xl p-6 flex items-center justify-center relative overflow-hidden">
-         <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
-         <ProductImage
+      <div className="relative flex w-[50%] items-center justify-center overflow-hidden rounded-l-3xl bg-[#F5F5F7] p-6">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
+        <ProductImage
           imageUrl={imageUrl}
-          className="relative w-full h-full object-cover rounded-3xl shadow-md transition-transform duration-500 hover:scale-[1.02] z-10"
+          id={id} // Передаємо ID для посилання
+          className="z-10"
         />
       </div>
 
       {/* ПРАВА ЧАСТИНА (КОНТЕНТ) */}
-      <div className="flex-1 bg-white p-8 flex flex-col justify-between rounded-r-3xl">
-        <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-1 flex-col justify-between rounded-r-3xl bg-white p-8">
+        <div className="flex h-full flex-col overflow-hidden">
           <div className="mb-6 flex-shrink-0">
-            <Title text={name} size="md" className="font-extrabold text-2xl mb-2 text-gray-900" />
-            <p className="text-gray-500 text-sm leading-relaxed">{textDetails}</p>
+            <Title
+              text={name}
+              size="md"
+              className="mb-2 text-2xl font-extrabold text-gray-900"
+            />
+            <p className="text-sm leading-relaxed text-gray-500">
+              {textDetails}
+            </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 -mr-2 custom-scrollbar space-y-6">
-            
+          <div className="custom-scrollbar -mr-2 flex-1 space-y-6 overflow-y-auto pr-2">
             {/* ВАРІАНТИ */}
             {parsedOptions.length > 0 && (
               <div>
-                <h3 className="text-sm font-bold mb-3 text-gray-800 uppercase tracking-wide opacity-80">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800 opacity-80">
                   Wybierz wariant:
                 </h3>
                 <div className="flex flex-col gap-2.5">
@@ -176,24 +183,32 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
                       key={option.value}
                       onClick={() => handleOptionClick(option)}
                       className={cn(
-                        "group flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-200 ease-in-out",
+                        "group flex items-center justify-between rounded-xl border px-4 py-3 transition-all duration-200 ease-in-out",
                         "hover:shadow-md",
                         selectedOption === option.name
-                          ? "border-violet-600 bg-violet-50 shadow-sm ring-1 ring-violet-600/20" 
-                          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                          ? "border-violet-600 bg-violet-50 shadow-sm ring-1 ring-violet-600/20"
+                          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50",
                       )}
                     >
-                      <span className={cn(
-                        "text-sm transition-colors",
-                        selectedOption === option.name ? "font-semibold text-violet-700" : "text-gray-700"
-                      )}>
+                      <span
+                        className={cn(
+                          "text-sm transition-colors",
+                          selectedOption === option.name
+                            ? "font-semibold text-violet-700"
+                            : "text-gray-700",
+                        )}
+                      >
                         {option.name}
                       </span>
                       {option.price !== undefined && (
-                        <span className={cn(
-                           "text-sm font-medium",
-                           selectedOption === option.name ? "text-violet-900" : "text-gray-500 group-hover:text-gray-900"
-                        )}>
+                        <span
+                          className={cn(
+                            "text-sm font-medium",
+                            selectedOption === option.name
+                              ? "text-violet-900"
+                              : "text-gray-500 group-hover:text-gray-900",
+                          )}
+                        >
                           {option.price} zł
                         </span>
                       )}
@@ -203,57 +218,60 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
               </div>
             )}
 
-{/* ДОДАТКИ */}
-{additionally.length > 0 && (
-  // 👇 ЗМІНИ ТУТ: Додаємо фон, відступи та заокруглення
-  <div className="bg-gray-50 p-4 rounded-xl mt-4 border border-gray-100">
-    
-    <h3 className="text-sm font-bold mb-3 text-gray-800 uppercase tracking-wide opacity-80">
-      Dodatki:
-    </h3>
-    <div className={cn(
-        "w-full",
-        additionally.length > 3 
-            ? "max-h-[220px] overflow-y-auto pr-2 custom-scrollbar"
-            : "h-auto"
-    )}>
-        <div className="grid grid-cols-3 gap-3 pb-1">
-        {additionally.map((item) => (
-            <Additionallys
-            key={item.id}
-            name={item.name}
-            price={item.price}
-            imageUrl={item.imageUrl}
-            onClick={() => addAdditionally(item.id)}
-            active={selectedAdditionally.has(item.id)}
-            />
-        ))}
-        </div>
-    </div>
-  </div>
-)}
+            {/* ДОДАТКИ */}
+            {additionally.length > 0 && (
+              // 👇 ЗМІНИ ТУТ: Додаємо фон, відступи та заокруглення
+              <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800 opacity-80">
+                  Dodatki:
+                </h3>
+                <div
+                  className={cn(
+                    "w-full",
+                    additionally.length > 3
+                      ? "custom-scrollbar max-h-[220px] overflow-y-auto pr-2"
+                      : "h-auto",
+                  )}
+                >
+                  <div className="grid grid-cols-3 gap-3 pb-1">
+                    {additionally.map((item) => (
+                      <Additionallys
+                        key={item.id}
+                        name={item.name}
+                        price={item.price}
+                        imageUrl={item.imageUrl}
+                        onClick={() => addAdditionally(item.id)}
+                        active={selectedAdditionally.has(item.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* КНОПКА */}
-        <div className="mt-6 pt-4 border-t border-gray-100 flex-shrink-0">
-            <Button
+        <div className="mt-6 flex-shrink-0 border-t border-gray-100 pt-4">
+          <Button
             loading={loading}
             className={cn(
-                "w-full h-[55px] rounded-2xl text-base font-bold shadow-lg shadow-violet-500/20 transition-transform active:scale-[0.98]",
-                "bg-violet-600 hover:bg-violet-700 text-white"
+              "h-[55px] w-full rounded-2xl text-base font-bold shadow-lg shadow-violet-500/20 transition-transform active:scale-[0.98]",
+              "bg-violet-600 text-white hover:bg-violet-700",
             )}
             onClick={handleSubmit}
             disabled={loading || totalPrice === 0}
-            >
-            {loading ? "Przetwarzanie..." : (
-                <span className="flex items-center justify-center gap-2">
-                    Dodaj do koszyka 
-                    <span className="w-1 h-1 bg-white/50 rounded-full mx-1"></span>
-                    {totalPrice} zł
-                </span>
+          >
+            {loading ? (
+              "Przetwarzanie..."
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                Dodaj do koszyka
+                <span className="mx-1 h-1 w-1 rounded-full bg-white/50"></span>
+                {totalPrice} zł
+              </span>
             )}
-            </Button>
+          </Button>
         </div>
       </div>
     </div>

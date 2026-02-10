@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { ChooseFurnitureForm } from "./choose-furniture-form";
 import { ProductWithRelations } from "../../../@types/prisma";
 import { useCartStore } from "./store/cart";
+import { useRouter } from "next/navigation";
 
 interface Props {
   product: ProductWithRelations;
@@ -17,6 +18,7 @@ export const ProductForm: React.FC<Props> = ({
 }) => {
   const addCartItem = useCartStore((s) => s.addCartItem);
   const loading = useCartStore((s) => s.loading);
+  const router = useRouter();
 
   const firstItem = product.items[0];
 
@@ -41,6 +43,14 @@ export const ProductForm: React.FC<Props> = ({
 
       toast.success(product.name + " dodano do koszyka");
       _onSubmit?.();
+      // 👇 3. ГОЛОВНА ЛОГІКА ТУТ
+      if (_onSubmit) {
+        // Якщо це модалка — просто закриваємо її (як було раніше)
+        _onSubmit();
+      } else {
+        // Якщо це окрема сторінка (onSubmit немає) — перекидаємо на головну
+        router.push("/");
+      }
     } catch (err) {
       toast.error("Nie udało się dodać produktu do koszyka");
       console.error(err);
@@ -58,20 +68,21 @@ export const ProductForm: React.FC<Props> = ({
         items={product.items}
         onSubmit={onSubmit}
         loading={loading}
+        id={product.id}
       />
     );
   }
 
   // Fallback (це та сама чорна кнопка, яку ти бачив)
   return (
-    <div className="flex items-center justify-center h-full p-10">
-        <button
+    <div className="flex h-full items-center justify-center p-10">
+      <button
         disabled={loading}
         onClick={() => onSubmit()}
-        className="px-6 py-3 bg-black text-white rounded-xl font-bold"
-        >
+        className="rounded-xl bg-black px-6 py-3 font-bold text-white"
+      >
         Dodaj do koszyka (Prosty produkt)
-        </button>
+      </button>
     </div>
   );
 };

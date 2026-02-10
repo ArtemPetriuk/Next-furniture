@@ -31,7 +31,7 @@ export const ProfileButton: React.FC<Props> = ({
         className="flex items-center gap-1"
       >
         <User size={16} />
-        Увійти
+        zaloguj się
       </Button>
     );
   }
@@ -64,7 +64,7 @@ export const ProfileButton: React.FC<Props> = ({
           <Link href="/profile" onClick={() => setIsOpen(false)}>
             <div className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors hover:bg-gray-100">
               <User size={14} />
-              Мій профіль
+              Mój profil
             </div>
           </Link>
 
@@ -76,7 +76,7 @@ export const ProfileButton: React.FC<Props> = ({
             className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
           >
             <LogOut size={14} />
-            Вийти
+            Wyloguj się
           </button>
         </div>
       </HoverCardContent>
