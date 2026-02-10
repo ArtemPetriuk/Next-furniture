@@ -49,19 +49,37 @@ export default function CheckoutPage() {
     fetchCartItems();
   }, [fetchCartItems]);
 
-  const onSubmit: SubmitHandler<CheckoutFormValues> = async (data) => {
+  const onSubmit = async (data: CheckoutFormValues) => {
     try {
       setSubmitting(true);
 
-      const result = await createOrder(data); // ✅ Використовуємо імпорт!
+      // 1. Відправляємо дані на наш оновлений бекенд
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-      toast.success("Замовлення успішно оформлено! ID: " + result.orderId);
+      if (!response.ok) {
+        throw new Error("Failed to create order");
+      }
 
-      // Тут можна додати очистку кошика або редірект
-      // router.push("/success");
-    } catch (error) {
-      console.error(error);
-      toast.error("Не вдалося створити замовлення");
+      // 2. Отримуємо відповідь (там тепер лежить { url: "https://checkout.stripe.com/..." })
+      const responseData = await response.json();
+      const paymentUrl = responseData.url;
+
+      if (paymentUrl) {
+        // 3. Перекидаємо користувача на Stripe! 🚀
+        location.href = paymentUrl;
+      } else {
+        // Якщо посилання немає (наприклад, якась помилка або інший метод оплати)
+        toast.error("Помилка: не вдалося отримати посилання на оплату");
+      }
+    } catch (err) {
+      console.log(err);
+      toast.error("Не вдалося створити замовлення", {
+        icon: "❌",
+      });
     } finally {
       setSubmitting(false);
     }
