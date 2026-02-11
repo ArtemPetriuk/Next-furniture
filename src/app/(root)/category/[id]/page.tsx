@@ -28,8 +28,6 @@ export default async function CategoryPage({
   return (
     <>
       {/* 👇 Замінили TopBar на Header */}
-      <Header />
-
       <Container className="mt-10 pb-10">
         <Title text={category.name} size="lg" className="mb-8 font-extrabold" />
 
