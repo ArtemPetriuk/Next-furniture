@@ -3,21 +3,24 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
-import { Api } from "./services/api-client";
 import { useClickAway, useDebounce } from "react-use";
-import Link from "next/link";
+import { Api } from "./services/api-client";
 import { Product } from "@prisma/client";
 
 interface Props {
   className?: string;
+  removeScrollListener?: boolean;
 }
 
-export const SearchInput: React.FC<Props> = ({ className }) => {
+export const SearchInput: React.FC<Props> = ({
+  className,
+  removeScrollListener = false,
+}) => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [focused, setFocused] = React.useState(false);
   const [products, setProducts] = React.useState<Product[]>([]);
-  const ref = React.useRef(null);
 
+  const ref = React.useRef(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   useClickAway(ref, () => {
@@ -25,17 +28,16 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
   });
 
   React.useEffect(() => {
+    if (removeScrollListener) return;
+
     const handleScroll = () => {
       setFocused(false);
       inputRef.current?.blur();
     };
 
     window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [removeScrollListener]);
 
   useDebounce(
     async () => {
@@ -43,8 +45,7 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
         const response = await Api.products.search(searchQuery);
         setProducts(response);
       } catch (error) {
-        console.error("Search error:", error);
-        setProducts([]);
+        console.error(error);
       }
     },
     250,
@@ -59,19 +60,14 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
 
   return (
     <>
-      {/* ВИПРАВЛЕННЯ БЛЮРУ:
-         1. bg-black/50 -> bg-black/30 (менш темний)
-         2. backdrop-blur-sm -> backdrop-blur-[2px] (дуже легке розмиття)
-      */}
-      {focused && (
-        <div className="fixed inset-0 z-30 bg-black/30 backdrop-blur-[2px] transition-all duration-200" />
+      {focused && !removeScrollListener && (
+        <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm transition-all duration-200" />
       )}
 
       <div
         ref={ref}
         className={cn(
-          // ВИПРАВЛЕННЯ ВИСОТИ: h-11 -> h-12
-          "relative z-40 flex h-12 flex-1 justify-between rounded-2xl transition-all duration-300",
+          "relative z-40 flex h-11 flex-1 justify-between rounded-2xl transition-all duration-300",
           className,
         )}
       >
@@ -87,7 +83,6 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
           onFocus={() => setFocused(true)}
         />
 
-        {/* Випадаючий список */}
         <div
           className={cn(
             "invisible absolute left-0 top-14 z-30 w-full translate-y-2 overflow-hidden rounded-2xl bg-white opacity-0 shadow-2xl transition-all duration-200",
@@ -97,31 +92,26 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
           {products.length > 0 ? (
             <div className="flex flex-col py-2">
               {products.map((product) => (
-                <Link
+                // 👇 ТУТ ЗМІНИЛИ: Використовуємо звичайний <a> замість <Link>
+                // Це ігнорує модальне вікно і відкриває нормальну сторінку
+                <a
                   onClick={onClickItem}
                   key={product.id}
-                  className="flex w-full items-center gap-4 px-4 py-3 transition-colors hover:bg-gray-50"
+                  className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-primary/10"
                   href={`/product/${product.id}`}
                 >
-                  <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
-                    <img
-                      className="h-full w-full object-cover"
-                      src={product.imageUrl}
-                      alt={product.name}
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium leading-tight text-gray-900">
-                      {product.name}
-                    </span>
-                  </div>
-                </Link>
+                  <img
+                    className="h-8 w-8 rounded-sm object-cover"
+                    src={product.imageUrl}
+                    alt={product.name}
+                  />
+                  <span>{product.name}</span>
+                </a>
               ))}
             </div>
           ) : (
             <div className="px-4 py-4 text-center text-sm text-gray-500">
-              {searchQuery ? "Brak wyników" : "Wpisz nazwę towaru..."}
+              {searchQuery ? "Товарів не знайдено" : "Почніть вводити назву..."}
             </div>
           )}
         </div>

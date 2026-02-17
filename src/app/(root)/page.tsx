@@ -6,6 +6,9 @@ import { ProductsGroupList } from "@/components/shared/product-group-list"; // �
 import { Suspense } from "react";
 import { findFurniture, GetSearchParams } from "@/lib/find-furniture"; // Імпортуємо нашу функцію
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function Home({
   searchParams,
 }: {

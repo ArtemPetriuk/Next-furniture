@@ -57,7 +57,7 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
             className={cn(
               "flex items-center transition-all duration-300",
               isScrolled
-                ? "mr-8 w-auto flex-shrink-0 opacity-100"
+                ? "opacity-150 mr-8 w-auto flex-shrink-0"
                 : "w-0 overflow-hidden opacity-0",
             )}
           >
