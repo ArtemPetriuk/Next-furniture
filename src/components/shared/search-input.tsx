@@ -18,9 +18,24 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
   const [products, setProducts] = React.useState<Product[]>([]);
   const ref = React.useRef(null);
 
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
   useClickAway(ref, () => {
     setFocused(false);
   });
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setFocused(false);
+      inputRef.current?.blur();
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   useDebounce(
     async () => {
@@ -63,6 +78,7 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
         <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
 
         <input
+          ref={inputRef}
           className="h-full w-full rounded-2xl bg-gray-50 pl-11 text-base text-black outline-none transition-all duration-200 placeholder:text-gray-400 focus:bg-white focus:shadow-md focus:ring-1 focus:ring-primary/20"
           type="text"
           placeholder="Szukaj..."

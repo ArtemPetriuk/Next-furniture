@@ -91,7 +91,9 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
           <div
             className={cn(
               "overflow-hidden transition-all duration-300 ease-in-out",
-              isScrolled ? "mr-2 w-64 opacity-100" : "w-0 opacity-0",
+              isScrolled
+                ? "mr-2 w-64 overflow-visible opacity-100"
+                : "w-0 overflow-hidden opacity-0",
             )}
           >
             <SearchInput className="h-11 bg-gray-100" />
