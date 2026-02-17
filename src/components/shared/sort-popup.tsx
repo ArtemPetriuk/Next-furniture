@@ -12,7 +12,7 @@ interface Props {
 
 // Наші варіанти сортування
 const sortOptions = [
-  { name: "Popularne", value: "rating" },
+  { name: "Najnowsze", value: "rating" },
   { name: "Od najtańszych", value: "price_asc" },
   { name: "Od najdroższych", value: "price_desc" },
 ];
