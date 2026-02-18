@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     // 1. Перевіряємо, чи всі поля заповнені
     if (!data.email || !data.password || !data.fullName) {
       return NextResponse.json(
-        { message: "Заповніть усі поля" },
+        { message: "proszę wypełnić wszystkie pola" },
         { status: 400 },
       );
     }
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     if (user) {
       return NextResponse.json(
-        { message: "Користувач з такою поштою вже існує" },
+        { message: "Korzystownik z taką pocztą już istnieje" },
         { status: 400 },
       );
     }
@@ -43,11 +43,11 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(
-      { message: "Успішна реєстрація" },
+      { message: "Pomyślna rejestracja" },
       { status: 201 },
     );
   } catch (error) {
     console.error("Error [REGISTER]", error);
-    return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
+    return NextResponse.json({ message: "Błąd serwera" }, { status: 500 });
   }
 }

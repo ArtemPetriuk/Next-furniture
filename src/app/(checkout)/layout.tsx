@@ -1,6 +1,6 @@
-import { Container, Header } from "@/components/shared";
-
 import { Metadata } from "next";
+import { Container } from "@/components/shared/container";
+import { Header } from "@/components/shared/header";
 
 export const metadata: Metadata = {
   title: "Next.js",
@@ -13,12 +13,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[#F4F1EE]">
-      <Container>
-        <Header hasSearch={false} hasCart={false} className="border-gray-200" />
-      </Container>
+    <main className="flex min-h-screen flex-col bg-[#F4F1EE]">
+      {/* 👇 ЗМІНИ ТУТ: Додали shadow-sm, relative та z-10 */}
+      {/* shadow-sm = маленька тінь */}
+      {/* relative z-10 = піднімаємо блок вище, щоб тінь падала НА наступний елемент */}
+      <div className="relative z-10 bg-[#F4F1EE] shadow-sm">
+        <Container>
+          <Header
+            hasSearch={false}
+            hasCart={false}
+            className="border-gray-200"
+          />
+        </Container>
+      </div>
 
-      {children}
+      {/* 3. Головний контент чекауту */}
+      <div className="flex-1">{children}</div>
     </main>
   );
 }

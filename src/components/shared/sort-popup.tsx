@@ -10,7 +10,6 @@ interface Props {
   className?: string;
 }
 
-// Наші варіанти сортування
 const sortOptions = [
   { name: "Najnowsze", value: "rating" },
   { name: "Od najtańszych", value: "price_asc" },
@@ -24,20 +23,16 @@ export const SortPopup: React.FC<Props> = ({ className }) => {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
 
-  // Дивимося в URL: яке сортування зараз активне? (якщо немає - то rating)
   const activeSort = searchParams.get("sortBy") || "rating";
   const activeLabel = sortOptions.find((obj) => obj.value === activeSort)?.name;
 
   useClickAway(ref, () => setOpen(false));
 
   const onSelectSort = (value: string) => {
-    // 1. Беремо поточні параметри URL
     const params = new URLSearchParams(searchParams.toString());
 
-    // 2. Записуємо туди нове сортування
     params.set("sortBy", value);
 
-    // 3. Оновлюємо URL без перезавантаження сторінки
     router.push(`?${params.toString()}`, { scroll: false });
 
     setOpen(false);

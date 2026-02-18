@@ -10,6 +10,7 @@ interface Props {
 
 export const RegisterForm: React.FC<Props> = ({ onClose }) => {
   const form = useForm({
+    mode: "onChange", // 👈 1. Змушуємо форму перевіряти дані "на льоту" (при кожному натисканні клавіші)
     defaultValues: {
       email: "",
       fullName: "",
@@ -21,10 +22,9 @@ export const RegisterForm: React.FC<Props> = ({ onClose }) => {
   const onSubmit = async (data: any) => {
     try {
       if (data.password !== data.confirmPassword) {
-        return toast.error("Паролі не співпадають");
+        return toast.error("Hasła nie pasują do siebie"); // Трохи підправив на польську
       }
 
-      // Відправляємо на наш API реєстрації
       const response = await fetch("/api/auth/register", {
         method: "POST",
         body: JSON.stringify(data),
@@ -34,7 +34,7 @@ export const RegisterForm: React.FC<Props> = ({ onClose }) => {
         throw Error();
       }
 
-      toast.success("registracja zakończona sukcesem!"); // Успішна реєстрація
+      toast.success("Rejestracja zakończona sukcesem!");
       onClose?.();
     } catch (error) {
       toast.error(
@@ -57,11 +57,33 @@ export const RegisterForm: React.FC<Props> = ({ onClose }) => {
         </div>
       </div>
 
-      <Input
-        {...form.register("email", { required: true })}
-        placeholder="Email"
-        type="email"
-      />
+      {/* 👇 2 & 3. Оновлений інпут для Email */}
+      <div>
+        <Input
+          {...form.register("email", {
+            required: "Email jest wymagany", // Текст, якщо поле пусте
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, // Формула правильного email
+              message: "Wprowadź poprawny adres email", // Текст помилки, якщо email невірний
+            },
+          })}
+          placeholder="Email"
+          type="email"
+          // Якщо є помилка, робимо рамку червоною
+          className={
+            form.formState.errors.email
+              ? "border-red-500 focus-visible:ring-red-500"
+              : ""
+          }
+        />
+        {/* Показуємо сам текст помилки під інпутом */}
+        {form.formState.errors.email && (
+          <p className="mt-1 text-sm text-red-500">
+            {form.formState.errors.email.message as string}
+          </p>
+        )}
+      </div>
+
       <Input
         {...form.register("fullName", { required: true })}
         placeholder="Pełne imię"

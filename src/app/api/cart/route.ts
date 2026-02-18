@@ -1,48 +1,89 @@
 import prisma from "../../../../prisma/prisma-client";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { getUserSession } from "@/lib/get-user-session";
+import { updateCartTotalAmount } from "@/lib/update-cart-total-amount";
 import { findOrCreateCart } from "@/lib/find-or-create-cart";
 import { CreateCartItemValues } from "@/components/shared/services/dto/cart.dto";
-import { updateCartTotalAmount } from "@/lib/update-cart-total-amount";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get("cartToken")?.value;
+    const user = await getUserSession();
+    const userId = user?.id ? Number(user.id) : null;
 
-    if (!token) {
-      return NextResponse.json({ totalAmount: 0, items: [] });
-    }
+    let userCart;
 
-    const userCart = await prisma.cart.findFirst({
-      where: {
-        OR: [{ token }],
-      },
-      include: {
-        items: {
-          orderBy: {
-            createdAt: "desc",
-          },
-          include: {
-            productItem: {
-              include: {
-                product: true,
-              },
+    if (userId) {
+      // 1. Шукаємо кошик користувача за userId
+      userCart = await prisma.cart.findFirst({
+        where: { userId },
+        include: {
+          items: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              productItem: { include: { product: true } },
+              additionally: true,
             },
-            additionally: true,
           },
         },
-      },
-    });
+      });
+
+      // 2. Якщо у юзера в акаунті НЕМАЄ кошика, але є анонімний у куках
+      if (!userCart && token) {
+        const anonymousCart = await prisma.cart.findFirst({
+          where: { token, userId: null },
+        });
+
+        if (anonymousCart) {
+          // Прив'язуємо анонімний кошик до юзера
+          userCart = await prisma.cart.update({
+            where: { id: anonymousCart.id },
+            data: { userId },
+            include: {
+              items: {
+                orderBy: { createdAt: "desc" },
+                include: {
+                  productItem: { include: { product: true } },
+                  additionally: true,
+                },
+              },
+            },
+          });
+        }
+      }
+    } else if (token) {
+      // 3. Якщо анонім — просто за токеном
+      userCart = await prisma.cart.findFirst({
+        where: { token },
+        include: {
+          items: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              productItem: { include: { product: true } },
+              additionally: true,
+            },
+          },
+        },
+      });
+    }
 
     if (!userCart) {
       return NextResponse.json({ totalAmount: 0, items: [] });
     }
 
-    return NextResponse.json(userCart);
+    const resp = NextResponse.json(userCart);
+
+    // Вирішуємо помилку TS зі скріншота
+    if (userCart.token) {
+      resp.cookies.set("cartToken", userCart.token, { path: "/" });
+    }
+
+    return resp;
   } catch (error) {
-    console.error("Cart error:", error);
+    console.error("[CART GET] Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -52,8 +93,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  console.log("[API CART POST] body:", body);
   const data = body as CreateCartItemValues;
+
   try {
     let token = req.cookies.get("cartToken")?.value;
 
@@ -63,7 +104,6 @@ export async function POST(req: NextRequest) {
 
     const userCart = await findOrCreateCart(token);
 
-    // Get all cart items for this product to manually check additionally match
     const cartItemsForProduct = await prisma.cartItem.findMany({
       where: {
         cartId: userCart.id,
@@ -74,7 +114,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Find exact match: same productItemId and exact same additionally items
     const additionallyIds = data.additionally || [];
     const findCartItem = cartItemsForProduct.find((item) => {
       const itemAdditionallyIds = item.additionally.map((a) => a.id).sort();
@@ -85,15 +124,10 @@ export async function POST(req: NextRequest) {
       );
     });
 
-    // if item found add +1
     if (findCartItem) {
       await prisma.cartItem.update({
-        where: {
-          id: findCartItem.id,
-        },
-        data: {
-          quantity: findCartItem.quantity + 1,
-        },
+        where: { id: findCartItem.id },
+        data: { quantity: findCartItem.quantity + 1 },
       });
     } else {
       await prisma.cartItem.create({
@@ -109,12 +143,13 @@ export async function POST(req: NextRequest) {
     const updatedUserCart = await updateCartTotalAmount(token);
 
     const resp = NextResponse.json(updatedUserCart);
-    resp.cookies.set("cartToken", token);
+    // Використовуємо той самий токен для стабільності
+    resp.cookies.set("cartToken", token, { path: "/" });
     return resp;
   } catch (error) {
     console.log("[CART_POST] Server error", error);
     return NextResponse.json(
-      { message: "Nie udało się utworzyć koszyka" },
+      { message: "Не вдалося додати в кошик" },
       { status: 500 },
     );
   }

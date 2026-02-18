@@ -48,7 +48,7 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
           // 👇 ЛОГІКА ШИРИНИ:
           // isScrolled -> px-10 (майже на весь екран).
           // Normal -> max-w-[1280px] (стандартний контейнер).
-          isScrolled ? "w-full px-10" : "max-w-[1280px] px-4",
+          isScrolled ? "w-full px-6" : "max-w-[1280px] px-4",
         )}
       >
         {/* ЛІВА ЧАСТИНА: Логотип + Категорії */}

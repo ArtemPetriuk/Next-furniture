@@ -30,7 +30,9 @@ export const LoginForm: React.FC<Props> = ({ onClose }) => {
       }
 
       toast.success("wypelniono pomyślnie!"); // Успішний вхід
-      onClose?.(); // Закриваємо модалку
+      onClose?.();
+      window.location.reload();
+      // Закриваємо модалку
     } catch (error) {
       console.error("Error [LOGIN]", error);
       toast.error("nie udało się zalogować!"); // Помилка входу

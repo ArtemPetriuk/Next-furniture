@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react"; // 👈 Додав useState
+import React, { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { CircleUser, User, LogOut } from "lucide-react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card"; // 👈 Змінив імпорти
+} from "@/components/ui/hover-card";
 
 interface Props {
   onClickSignIn?: () => void;
@@ -21,7 +21,19 @@ export const ProfileButton: React.FC<Props> = ({
   onClickSignIn,
 }) => {
   const { data: session } = useSession();
-  const [isOpen, setIsOpen] = useState(false); // Стейт для ручного контролю
+  const [isOpen, setIsOpen] = useState(false);
+
+  // 👇 Функція для повного очищення при виході
+  const handleSignOut = () => {
+    setIsOpen(false);
+
+    // 1. Видаляємо куку cartToken, щоб анонімний кошик не підтягнув дані юзера
+    document.cookie =
+      "cartToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+    // 2. Виходимо з NextAuth
+    signOut({ callbackUrl: "/" });
+  };
 
   if (!session) {
     return (
@@ -44,11 +56,9 @@ export const ProfileButton: React.FC<Props> = ({
       closeDelay={200}
     >
       <HoverCardTrigger asChild>
-        {/* Кнопка профілю */}
         <Button
           variant="secondary"
           className="flex items-center gap-2"
-          // Додатково можемо відкривати при кліку, якщо юзер з телефону
           onClick={() => setIsOpen(!isOpen)}
         >
           <CircleUser size={18} />
@@ -69,10 +79,7 @@ export const ProfileButton: React.FC<Props> = ({
           </Link>
 
           <button
-            onClick={() => {
-              setIsOpen(false);
-              signOut({ callbackUrl: "/" });
-            }}
+            onClick={handleSignOut} // 👈 Використовуємо нашу функцію очищення
             className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
           >
             <LogOut size={14} />

@@ -73,13 +73,11 @@ export default function CheckoutPage() {
         location.href = paymentUrl;
       } else {
         // Якщо посилання немає (наприклад, якась помилка або інший метод оплати)
-        toast.error("Помилка: не вдалося отримати посилання на оплату");
+        toast.error("Nie można przetworzyć płatności");
       }
     } catch (err) {
       console.log(err);
-      toast.error("Не вдалося створити замовлення", {
-        icon: "❌",
-      });
+      toast.error("Nie udało się stworzyć zamówienia", {});
     } finally {
       setSubmitting(false);
     }

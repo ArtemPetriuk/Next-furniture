@@ -49,7 +49,7 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
         </div>
 
         <Button variant="outline" onClick={onSwitchType} className="h-12">
-          {type === "login" ? "Реєстрація" : "Вхід"}
+          {type === "login" ? "Rejestracja" : "Logowanie"}
         </Button>
       </DialogContent>
     </Dialog>
