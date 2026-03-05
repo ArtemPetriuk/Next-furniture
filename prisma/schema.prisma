@@ -89,6 +89,7 @@ model ProductItem {
 
     price     Int
     options    String?
+    stock     Int      @default(0)
 
     cartItems CartItem[]
 

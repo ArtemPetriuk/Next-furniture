@@ -71,17 +71,23 @@ export const SearchInput: React.FC<Props> = ({
           className,
         )}
       >
-        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+        <div className="group relative h-11 w-full">
+          {/* Іконка лупи */}
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors duration-300 group-focus-within:scale-110 group-focus-within:text-primary group-hover:text-primary"
+          />
 
-        <input
-          ref={inputRef}
-          className="h-full w-full rounded-2xl bg-gray-50 pl-11 text-base text-black outline-none transition-all duration-200 placeholder:text-gray-400 focus:bg-white focus:shadow-md focus:ring-1 focus:ring-primary/20"
-          type="text"
-          placeholder="Szukaj..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setFocused(true)}
-        />
+          <input
+            ref={inputRef}
+            className="h-full w-full cursor-pointer rounded-2xl bg-gray-50 pl-11 pr-4 text-base text-black outline-none transition-all duration-300 ease-in-out placeholder:text-gray-400 hover:cursor-text hover:bg-indigo-50/50 focus:bg-white focus:shadow-md focus:ring-2 focus:ring-primary/20"
+            type="text"
+            placeholder="Szukaj..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setFocused(true)}
+          />
+        </div>
 
         <div
           className={cn(

@@ -1,7 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { hashSync } from "bcrypt";
 // 🔥 Додаємо filterOptions в імпорт
-import { _additionally, products, categories,filterOptions  } from "./constants";
+import {
+  _additionally,
+  products,
+  categories,
+  filterOptions,
+} from "./constants";
 
 const prisma = new PrismaClient();
 
@@ -92,11 +97,11 @@ async function up() {
     7: [12, 13, 14, 15], // Садові меблі
   };
 
- // 5. ПРОДУКТИ
+  // 5. ПРОДУКТИ
   const createdProducts = await Promise.all(
     products.map(async (product) => {
       // @ts-ignore
-      const tags = product._filterTags || []; 
+      const tags = product._filterTags || [];
       const categoryId = product.categoryId;
 
       const connectFilters = allFilters
@@ -112,11 +117,11 @@ async function up() {
           categoryId: product.categoryId,
 
           // 🔥 ДОДАЙ ЦЕЙ РЯДОК:
-    // @ts-ignore (бо в типі products в constants.ts цього поля може ще не бути в типах TS)
-    description: product.description || "Brak opisu",
-          
+          // @ts-ignore (бо в типі products в constants.ts цього поля може ще не бути в типах TS)
+          description: product.description || "Brak opisu",
+
           // 🔥 ВИПРАВЛЕННЯ: Просто передаємо рядок, без JSON.parse
-          options: product.options || undefined, 
+          options: product.options || undefined,
 
           additionally: {
             connect: additionallyIds.map((id) => ({ id })),
@@ -126,7 +131,7 @@ async function up() {
           },
         },
       });
-    })
+    }),
   );
 
   // 6. Варіанти (ProductItems)
@@ -139,6 +144,7 @@ async function up() {
           productId: product.id,
           price: option.price,
           options: option.name,
+          stock: Math.floor(Math.random() * 16),
         })),
       });
     } else {
@@ -147,6 +153,7 @@ async function up() {
           productId: product.id,
           price: randomDecimalNumber(500, 5000),
           options: product.options,
+          stock: Math.floor(Math.random() * 16),
         },
       });
     }

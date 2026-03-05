@@ -24,6 +24,7 @@ export default async function ProfilePage() {
       <div className="grid grid-cols-1 items-start gap-12 md:grid-cols-[450px_1fr]">
         <div className="flex flex-col gap-8">
           <h1 className="text-3xl font-extrabold text-gray-900">Moje konto</h1>
+          {/* Передаємо дані у клієнтську форму */}
           <ProfileForm data={user} />
         </div>
 

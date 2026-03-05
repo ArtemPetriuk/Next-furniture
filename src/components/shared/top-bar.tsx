@@ -125,15 +125,15 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
                 : "pointer-events-none w-0 translate-x-5 opacity-0",
             )}
           >
-            {/* {!session ? (
-              // Якщо не залогінений -> показуємо кнопку входу
+            {!session ? (
+              // Якщо НЕ залогінений -> відкриваємо модалку входу
               <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
             ) : (
-              // Якщо залогінений -> обгортаємо в Link, щоб йшло в профіль
+              // Якщо ЗАЛОГІНЕНИЙ -> йдемо в профіль і НЕ передаємо функцію відкриття модалки
               <Link href="/profile">
-                <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
+                <ProfileButton />
               </Link>
-            )} */}
+            )}
             <CartButton />
           </div>
         </div>

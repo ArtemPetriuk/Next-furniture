@@ -11,7 +11,6 @@ import { OrderSuccessEmail } from "@/components/email/order-success";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const resend = new Resend(process.env.RESEND_API_KEY);
 const MONTAGE_PRICE = 499;
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -26,19 +25,25 @@ export async function POST(req: NextRequest) {
     }
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    const userId = token?.sub ? Number(token.sub) : null;
 
-    // 1. Шукаємо кошик користувача
+    // 1. Отримуємо коректний внутрішній ID користувача з бази даних
+    let userId: number | null = null;
+    if (token?.email) {
+      const user = await prisma.user.findFirst({
+        where: { email: token.email },
+      });
+      if (user) {
+        userId = user.id; // Це буде валідний Int для бази даних
+      }
+    }
+
+    // 2. Шукаємо кошик користувача
     const userCart = await prisma.cart.findFirst({
       where: { token: cartToken },
       include: {
         items: {
           include: {
-            productItem: {
-              include: {
-                product: true,
-              },
-            },
+            productItem: { include: { product: true } },
             additionally: true,
           },
         },
@@ -49,10 +54,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
-    // 2. Рахуємо точну суму для замовлення
+    // 3. Розрахунок цін
     const orderItems = userCart.items.map((item) => {
       const additionalPrice = item.additionally.reduce(
-        (acc, option) => acc + option.price,
+        (acc, opt) => acc + opt.price,
         0,
       );
       const itemPrice = item.productItem.price + additionalPrice;
@@ -60,70 +65,81 @@ export async function POST(req: NextRequest) {
       return {
         ...item,
         price: itemPrice,
-        productItem: {
-          ...item.productItem,
-          price: itemPrice,
-        },
+        productItem: { ...item.productItem, price: itemPrice },
       };
     });
 
     const finalTotalAmount =
       userCart.totalAmount + (body.isMontageEnabled ? MONTAGE_PRICE : 0);
 
-    // 3. Створюємо замовлення в БД
-    // Використовуємо body.phone та body.address, щоб дозволити редагування
-    const order = await prisma.order.create({
-      data: {
-        token: cartToken,
-        userId: userId,
-        fullName: body.firstName + " " + body.lastName,
-        email: body.email,
-        phone: body.phone,
-        address: body.address,
-        comment: body.comment,
-        totalAmount: finalTotalAmount,
-        status: "PENDING",
-        items: JSON.stringify(orderItems),
-      },
+    // 4. ТРАНЗАКЦІЯ
+    const order = await prisma.$transaction(async (tx) => {
+      for (const item of userCart.items) {
+        const productItem = await tx.productItem.findUnique({
+          where: { id: item.productItemId },
+        });
+
+        if (!productItem || productItem.stock < item.quantity) {
+          throw new Error(`Товар закінчився на складі`);
+        }
+
+        await tx.productItem.update({
+          where: { id: item.productItemId },
+          data: { stock: { decrement: item.quantity } }, // Віднімаємо 1 stock при покупці
+        });
+      }
+
+      const newOrder = await tx.order.create({
+        data: {
+          token: cartToken,
+          userId: userId, // Тепер тут коректний Int
+          fullName: body.firstName + " " + body.lastName,
+          email: body.email,
+          phone: body.phone,
+          address: body.address,
+          comment: body.comment,
+          totalAmount: finalTotalAmount,
+          status: "PENDING",
+          items: JSON.stringify(orderItems),
+        },
+      });
+
+      await tx.cart.update({
+        where: { id: userCart.id },
+        data: { totalAmount: 0 },
+      });
+
+      await tx.cartItem.deleteMany({
+        where: { cartId: userCart.id },
+      });
+
+      return newOrder;
     });
 
-    await prisma.cart.update({
-      where: { id: userCart.id },
-      data: { totalAmount: 0 },
-    });
-    await prisma.cartItem.deleteMany({
-      where: { cartId: userCart.id },
-    });
-
-    // 5. СТВОРЮЄМО СЕСІЮ ОПЛАТИ STRIPE
+    // 4. СТВОРЮЄМО СЕСІЮ ОПЛАТИ STRIPE
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
           price_data: {
             currency: "pln",
-            product_data: {
-              name: `Zamówienie #${order.id}`,
-            },
+            product_data: { name: `Zamówienie #${order.id}` },
             unit_amount: Math.round(finalTotalAmount * 100),
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      // Передаємо orderId для відображення на сторінці успіху
       success_url: `${process.env.NEXTAUTH_URL}/checkout/success?orderId=${order.id}`,
       cancel_url: `${process.env.NEXTAUTH_URL}/checkout`,
-      metadata: {
-        order_id: order.id,
-      },
+      metadata: { order_id: order.id },
     });
 
-    // 6. Відправка Email через Resend
+    // 5. Відправка Email (опціонально)
     try {
       const emailHtml = await render(
         <OrderSuccessEmail
           orderId={order.id}
-          totalAmount={userCart.totalAmount}
+          totalAmount={finalTotalAmount}
           paymentUrl={session.url || ""}
         />,
       );
@@ -134,17 +150,18 @@ export async function POST(req: NextRequest) {
         subject: `Next Furniture | Zamówienie #${order.id}`,
         html: emailHtml,
       });
-
-      console.log("✅ [RESEND SUCCESS] Email sent to:", body.email);
     } catch (err) {
-      console.error("❌ [EMAIL ERROR]", err);
+      console.error(" [EMAIL ERROR]", err);
     }
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.log("[CHECKOUT_POST] Server Error", error);
+    console.log("[CHECKOUT_POST] Error", error);
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      {
+        message:
+          error instanceof Error ? error.message : "Internal Server Error",
+      },
       { status: 500 },
     );
   }

@@ -3,6 +3,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Additionally, ProductItem } from "@prisma/client";
+import { PackageX } from "lucide-react";
 import { ProductImage } from "./product-image";
 import { Title } from "./title";
 import { Button } from "../ui";
@@ -155,6 +156,11 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
       console.error("Nie można złożyć zamówienia: brak ID produktu");
     }
   };
+  // 1. Знаходимо активний елемент (варіацію), яку вибрав користувач
+  const activeItem = items.find((item) => item.options === selectedOption);
+
+  // 2. Перевіряємо, чи є він на складі
+  const isOutOfStock = activeItem ? activeItem.stock <= 0 : true;
 
   return (
     <div
@@ -187,48 +193,83 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
 
           <div className="custom-scrollbar -mr-2 flex-1 space-y-6 overflow-y-auto pr-2">
             {/* ВАРІАНТИ */}
+            {/* Показуємо попередження, тільки якщо товар є в наявності, але його мало */}
+            {!isOutOfStock &&
+              activeItem &&
+              activeItem.stock < 4 &&
+              activeItem.stock > 0 && (
+                <p className="rounded-lg border border-orange-100 bg-orange-50 p-2 text-sm font-medium text-orange-500">
+                  ⚠️ Zostało tylko {activeItem.stock} szt.!
+                </p>
+              )}
+
             {parsedOptions.length > 0 && (
               <div>
                 <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800 opacity-80">
                   Wybierz wariant:
                 </h3>
                 <div className="flex flex-col gap-2.5">
-                  {parsedOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleOptionClick(option)}
-                      className={cn(
-                        "group flex items-center justify-between rounded-xl border px-4 py-3 transition-all duration-200 ease-in-out",
-                        "hover:shadow-md",
-                        selectedOption === option.name
-                          ? "border-violet-600 bg-violet-50 shadow-sm ring-1 ring-violet-600/20"
-                          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50",
-                      )}
-                    >
-                      <span
+                  {parsedOptions.map((option) => {
+                    // Знаходимо реальний об'єкт товару з бази, щоб перевірити його stock
+                    const itemData = items.find(
+                      (i) => i.options === option.name,
+                    );
+                    const isItemDisabled = itemData
+                      ? itemData.stock <= 0
+                      : false;
+
+                    return (
+                      <button
+                        key={option.value}
+                        // Блокуємо кнопку, якщо сток 0
+                        disabled={isItemDisabled}
+                        onClick={() => handleOptionClick(option)}
                         className={cn(
-                          "text-sm transition-colors",
-                          selectedOption === option.name
-                            ? "font-semibold text-violet-700"
-                            : "text-gray-700",
+                          "group flex items-center justify-between rounded-xl border px-4 py-3 transition-all duration-200 ease-in-out",
+                          "hover:shadow-md",
+                          // Стилі для заблокованого товару
+                          isItemDisabled
+                            ? "cursor-not-allowed border-gray-100 bg-gray-50 opacity-50 grayscale"
+                            : selectedOption === option.name
+                              ? "border-violet-600 bg-violet-50 shadow-sm ring-1 ring-violet-600/20"
+                              : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50",
                         )}
                       >
-                        {option.name}
-                      </span>
-                      {option.price !== undefined && (
-                        <span
-                          className={cn(
-                            "text-sm font-medium",
-                            selectedOption === option.name
-                              ? "text-violet-900"
-                              : "text-gray-500 group-hover:text-gray-900",
+                        <div className="flex flex-col items-start">
+                          <span
+                            className={cn(
+                              "text-sm transition-colors",
+                              selectedOption === option.name && !isItemDisabled
+                                ? "font-semibold text-violet-700"
+                                : "text-gray-700",
+                            )}
+                          >
+                            {option.name}
+                          </span>
+                          {/* Додаємо напис, якщо варіанту немає */}
+                          {isItemDisabled && (
+                            <span className="text-[10px] font-bold uppercase text-red-500">
+                              Brak w magazynie
+                            </span>
                           )}
-                        >
-                          {option.price} zł
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                        </div>
+
+                        {/* Ціну показуємо тільки якщо товар доступний */}
+                        {!isItemDisabled && option.price !== undefined && (
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              selectedOption === option.name
+                                ? "text-violet-900"
+                                : "text-gray-500 group-hover:text-gray-900",
+                            )}
+                          >
+                            {option.price} zł
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -282,7 +323,12 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
             }}
             disabled={loading || totalPrice === 0}
           >
-            {loading ? (
+            {isOutOfStock ? (
+              <span className="backgraund-red flex items-center gap-2">
+                <PackageX size={20} /> {/* Іконка "немає в наявності" */}
+                Brak w magazynie
+              </span>
+            ) : loading ? (
               "Przetwarzanie..."
             ) : (
               <span className="flex items-center justify-center gap-2">

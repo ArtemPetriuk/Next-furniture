@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Order } from "@prisma/client";
+import { OrderHistorySkeleton } from "./OrderHistorySkeleton";
 
 export const OrderHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -24,12 +25,9 @@ export const OrderHistory = () => {
     fetchOrders();
   }, []);
 
-  if (isLoading)
-    return (
-      <div className="flex h-32 items-center justify-center text-gray-400">
-        <span className="animate-pulse">Wczytywanie historii...</span>
-      </div>
-    );
+  if (isLoading) {
+    return <OrderHistorySkeleton />;
+  }
 
   if (orders.length === 0) {
     return (
