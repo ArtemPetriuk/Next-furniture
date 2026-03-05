@@ -97,11 +97,14 @@ export const _additionally = [
   },
 ].map((obj, index) => ({ id: index + 1, ...obj }));
 
-
 export const filterOptions = [
   // --- УНІВЕРСАЛЬНІ (Підходять багатьом) ---
   { name: "Salon / Lobby", value: "salon", group: ["dom", "hotel", "biuro"] },
-  { name: "Taras / Ogród", value: "taras", group: ["dom", "kawiarnia", "hotel"] },
+  {
+    name: "Taras / Ogród",
+    value: "taras",
+    group: ["dom", "kawiarnia", "hotel"],
+  },
   { name: "Recepcja", value: "recepcja", group: ["biuro", "hotel"] },
   { name: "Gabinet", value: "gabinet", group: ["dom", "biuro"] },
   { name: "Strefa Chillout", value: "chillout", group: ["biuro", "hotel"] },
@@ -116,10 +119,18 @@ export const filterOptions = [
 
   // --- ТІЛЬКИ ОФІС ---
   { name: "Open Space", value: "open-space", group: ["biuro"] },
-  { name: "Sala konferencyjna", value: "konferencyjna", group: ["biuro", "hotel"] },
+  {
+    name: "Sala konferencyjna",
+    value: "konferencyjna",
+    group: ["biuro", "hotel"],
+  },
 
   // --- ТІЛЬКИ КАВ'ЯРНЯ ---
-  { name: "Sala główna", value: "sala-glowna", group: ["kawiarnia", "restauracja"] },
+  {
+    name: "Sala główna",
+    value: "sala-glowna",
+    group: ["kawiarnia", "restauracja"],
+  },
   { name: "Strefa VIP", value: "vip", group: ["kawiarnia", "hotel", "biuro"] },
 
   // --- ТІЛЬКИ ГОТЕЛЬ ---
@@ -133,7 +144,8 @@ export const products = [
     name: "Kanapa Milano",
     imageUrl: "/images/milano.webp",
     categoryId: 1,
-    description: "Minimalistyczny styl skandynawski, idealna do małych salonów.",
+    description:
+      "Minimalistyczny styl skandynawski, idealna do małych salonów.",
     _filterTags: ["salon", "lobby", "gabinet", "chillout"], // Підходить для офісу і дому
     options: JSON.stringify([
       { name: "2-osobowa", price: 1899 },
@@ -153,7 +165,7 @@ export const products = [
   },
   {
     name: "Kanapa narożna",
-    imageUrl: "/images/naruznik.jpg",
+    imageUrl: "/images/naruznik2.jpg",
     categoryId: 1,
     _filterTags: ["salon", "chillout", "open-space"], // Великий диван для великих кімнат
     options: JSON.stringify([
@@ -164,7 +176,7 @@ export const products = [
   },
   {
     name: "Kanapa skórzana",
-    imageUrl: "/images/leather-sofa.webp",
+    imageUrl: "/images/narozna.jpg",
     categoryId: 1,
     description: "Luksusowa skóra naturalna, klasyczny design Chesterfield.",
     _filterTags: ["gabinet", "salon", "vip", "lobby"], // Преміум сегмент
@@ -268,7 +280,7 @@ export const products = [
   // 🛏️ Ліжка (категорія 4)
   {
     name: "Łóżko małżeńskie",
-    imageUrl: "/images/bed-maried.webp",
+    imageUrl: "/images/bed-maried2.jpg",
     categoryId: 4,
     _filterTags: ["sypialnia", "pokoj", "vip"],
     options: JSON.stringify([
@@ -300,7 +312,7 @@ export const products = [
   },
   {
     name: "Łóżko piętrowe",
-    imageUrl: "/images/bunk-bed.webp",
+    imageUrl: "/images/bunk-bed2.jpg",
     categoryId: 4,
     _filterTags: ["dzieciecy", "hostel"],
     options: JSON.stringify([

@@ -8,6 +8,7 @@ import { Title } from "./title";
 import { Button } from "../ui";
 import { Additionallys } from "./additionally";
 import { useFurnitureOptions } from "../hooks/use-furniture-option";
+import { useRouter } from "next/navigation";
 
 interface Props {
   imageUrl: string;
@@ -52,6 +53,7 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
     selectedOption,
     handleOptionSelect,
   } = useFurnitureOptions(items);
+  const router = useRouter();
 
   // --- ЛОГІКА ПАРСИНГУ ---
   const parseOptions = (optionsData: any): ProductOption[] => {
@@ -134,18 +136,31 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
 
   const totalPrice = calculateTotalPrice();
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     const finalItemId = currentItemId || items[0]?.id;
 
     if (finalItemId) {
-      onSubmit(finalItemId, Array.from(selectedAdditionally));
+      try {
+        await onSubmit(finalItemId, Array.from(selectedAdditionally));
+        // ✅ Don't push router here - let the parent handle it
+      } catch (error) {
+        console.error("Błąd pod czas dodawania:", error);
+      }
     } else {
-      console.error("Немає ID товару!");
+      console.error("Nie można złożyć zamówienia: brak ID produktu");
     }
   };
 
   return (
-    <div className={cn(className, "flex h-auto min-h-[500px] flex-1")}>
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className={cn(className, "flex h-auto min-h-[500px] flex-1")}
+    >
       {/* ЛІВА ЧАСТИНА (ФОТО) */}
       <div className="relative flex w-[50%] items-center justify-center overflow-hidden rounded-l-3xl bg-[#F5F5F7] p-6">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
@@ -255,11 +270,16 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
         <div className="mt-6 flex-shrink-0 border-t border-gray-100 pt-4">
           <Button
             loading={loading}
+            type="button"
             className={cn(
               "h-[55px] w-full rounded-2xl text-base font-bold shadow-lg shadow-violet-500/20 transition-transform active:scale-[0.98]",
               "bg-violet-600 text-white hover:bg-violet-700",
             )}
-            onClick={handleSubmit}
+            onClick={(e) => {
+              e.preventDefault(); // Зупиняє дію по замовчуванню
+              e.stopPropagation(); // 🛑 ЗУПИНЯЄ "ПРОБИТТЯ" КЛІКУ ПО ІНШИХ ПОСИЛАННЯХ
+              handleSubmit(); // Викликаємо твою стандартну функцію
+            }}
             disabled={loading || totalPrice === 0}
           >
             {loading ? (

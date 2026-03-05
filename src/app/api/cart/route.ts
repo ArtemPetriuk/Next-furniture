@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     let userCart;
 
     if (userId) {
+      const actualUser = await prisma.user.findFirst({ where: { id: userId } });
       // 1. Шукаємо кошик користувача за userId
       userCart = await prisma.cart.findFirst({
         where: { userId },

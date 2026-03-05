@@ -1,37 +1,34 @@
-import { Container } from "@/components/shared/container";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { getUserSession } from "@/lib/get-user-session"; // 1. Імпортуємо
 import Link from "next/link";
 
-export default function CheckoutSuccessPage() {
+export default async function SuccessPage() {
+  const session = await getUserSession(); // 2. Отримуємо сесію
+
   return (
-    // 👇 ЗМІНИЛИ: було mt-20, стало mt-28 (опустили нижче)
-    <Container className="mt-28 flex flex-col items-center justify-center">
-      <div className="flex max-w-[500px] flex-col items-center gap-5 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle2 size={40} className="text-green-600" />
-        </div>
+    <div className="flex min-h-[50vh] flex-col items-center justify-center bg-gray-50">
+      {/* ... тут твій код з галочкою і текстом ... */}
 
-        <h1 className="text-3xl font-extrabold text-gray-900">
-          Zamówienie złożone pomyślnie!
-        </h1>
+      <h1 className="mt-4 text-2xl font-bold">Zamówienie złożone pomyślnie!</h1>
+      <p className="mt-2 max-w-md text-center text-gray-500">
+        Dziękujemy za zakupy. Już zaczęliśmy realizować Twoje zamówienie...
+      </p>
 
-        <p className="text-lg text-gray-500">
-          Dziękujemy za zakupy. Już zaczęliśmy realizować Twoje zamówienie.
-          Wiadomość z potwierdzeniem została wysłana na Twój e-mail.
-        </p>
+      <div className="mt-8 flex gap-4">
+        <Link href="/">
+          <button className="rounded-xl border border-gray-300 bg-white px-6 py-3 font-bold text-gray-700 hover:bg-gray-50">
+            Strona główna
+          </button>
+        </Link>
 
-        <div className="mt-5 flex gap-4">
-          <Link href="/">
-            <Button variant="outline" className="h-12 w-full text-base">
-              Strona główna
-            </Button>
-          </Link>
+        {/* 🔥 3. Ця кнопка з'явиться ТІЛЬКИ якщо користувач залогований */}
+        {session && (
           <Link href="/profile">
-            <Button className="h-12 w-full text-base">Moje zamówienia</Button>
+            <button className="rounded-xl bg-primary px-6 py-3 font-bold text-white hover:bg-primary/90">
+              Moje zamówienia
+            </button>
           </Link>
-        </div>
+        )}
       </div>
-    </Container>
+    </div>
   );
 }

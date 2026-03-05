@@ -42,15 +42,13 @@ export const ProductForm: React.FC<Props> = ({
       });
 
       toast.success(product.name + " dodano do koszyka");
-      _onSubmit?.();
-      // 👇 3. ГОЛОВНА ЛОГІКА ТУТ
+
+      // 🔥 FIXED: Only call _onSubmit if provided (modal case)
+      // Do NOT have a fallback router.push - let the parent handle it
       if (_onSubmit) {
-        // Якщо це модалка — просто закриваємо її (як було раніше)
         _onSubmit();
-      } else {
-        // Якщо це окрема сторінка (onSubmit немає) — перекидаємо на головну
-        router.push("/");
       }
+      // If no _onSubmit callback, just close the modal silently
     } catch (err) {
       toast.error("Nie udało się dodać produktu do koszyka");
       console.error(err);

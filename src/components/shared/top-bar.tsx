@@ -11,6 +11,7 @@ import { AuthModal } from "./modals/auth-modal";
 import Link from "next/link";
 import Image from "next/image";
 import { SearchInput } from "./search-input";
+import { useSession } from "next-auth/react";
 
 interface Props {
   categories: Category[];
@@ -20,6 +21,7 @@ interface Props {
 export const TopBar: React.FC<Props> = ({ categories, className }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openAuthModal, setOpenAuthModal] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +31,8 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
         setIsScrolled(false);
       }
     };
+
+    handleScroll();
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -121,7 +125,15 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
                 : "pointer-events-none w-0 translate-x-5 opacity-0",
             )}
           >
-            <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
+            {/* {!session ? (
+              // Якщо не залогінений -> показуємо кнопку входу
+              <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
+            ) : (
+              // Якщо залогінений -> обгортаємо в Link, щоб йшло в профіль
+              <Link href="/profile">
+                <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
+              </Link>
+            )} */}
             <CartButton />
           </div>
         </div>
