@@ -67,6 +67,16 @@ export function CheckoutClient({ userData }: Props) {
 
   return (
     <Container className="mb-20 mt-10">
+      <div className="mb-8 flex items-end justify-between border-b border-gray-100 pb-5">
+        <div>
+          <p className="mb-1 text-sm font-medium uppercase tracking-widest text-gray-500">
+            Składanie zamówienia
+          </p>
+          <h1 className="text-3xl font-extrabold text-gray-900 md:text-4xl">
+            Twoje nowe meble
+          </h1>
+        </div>
+      </div>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_420px]">
           <div className="flex flex-col gap-12">
@@ -84,13 +94,15 @@ export function CheckoutClient({ userData }: Props) {
               <CheckoutAddressForm form={form} />
             </section>
           </div>
-          <CheckoutSidebar
-            totalAmount={totalAmount}
-            loading={loading}
-            isSubmitting={form.formState.isSubmitting}
-            isMontageEnabled={isMontage}
-            disabled={loading || form.formState.isSubmitting}
-          />
+          <aside className="sticky top-10">
+            <CheckoutSidebar
+              totalAmount={totalAmount}
+              loading={loading}
+              isSubmitting={form.formState.isSubmitting}
+              isMontageEnabled={isMontage}
+              disabled={loading || form.formState.isSubmitting}
+            />
+          </aside>
         </div>
       </form>
     </Container>
