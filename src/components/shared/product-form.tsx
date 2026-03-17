@@ -58,7 +58,6 @@ export const ProductForm: React.FC<Props> = ({
   if (isFurnitureForm) {
     return (
       <ChooseFurnitureForm
-        options={product.options} // Передаємо опції з ПРОДУКТУ
         imageUrl={product.imageUrl}
         name={product.name}
         description={product.description}

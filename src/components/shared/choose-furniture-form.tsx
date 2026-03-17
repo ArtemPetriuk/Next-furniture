@@ -19,17 +19,10 @@ interface Props {
   loading?: boolean;
   onSubmit: (itemId: number, additionally: number[]) => void;
   className?: string;
-  options?: any;
+  // options?: any; // Більше не потрібно, дані беремо з items
   id: number;
-  // 🔥 1. Додаємо проп для опису
   description?: string | null;
 }
-
-type ProductOption = {
-  name: string;
-  value: string;
-  price?: number;
-};
 
 export const ChooseFurnitureForm: React.FC<Props> = ({
   name,
@@ -38,13 +31,11 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
   loading,
   onSubmit,
   className,
-  options,
+  // options,
   additionally = [],
   id,
-  // 🔥 2. Приймаємо його тут
   description,
 }) => {
-  // 🔥 3. Використовуємо опис з бази, або стандартний текст, якщо опису немає
   const textDetails = description || "Komfort i styl na co dzień";
 
   const {
@@ -54,88 +45,27 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
     selectedOption,
     handleOptionSelect,
   } = useFurnitureOptions(items);
-  const router = useRouter();
 
-  // --- ЛОГІКА ПАРСИНГУ ---
-  const parseOptions = (optionsData: any): ProductOption[] => {
-    try {
-      if (!optionsData) return [];
+  // Знаходимо активний елемент (варіацію), яку вибрав користувач
+  const activeItem = items.find((item) => item.options === selectedOption);
 
-      let parsed = [];
-
-      if (Array.isArray(optionsData)) {
-        parsed = optionsData;
-      } else if (typeof optionsData === "string") {
-        parsed = JSON.parse(optionsData);
-      } else if (typeof optionsData === "object") {
-        parsed = Object.values(optionsData);
-      }
-
-      return parsed
-        .map((option: any) => {
-          if (typeof option === "string") {
-            return {
-              name: option,
-              value: option.toLowerCase().replace(/\s+/g, "-"),
-            };
-          }
-          if (typeof option === "object" && option !== null) {
-            return {
-              name: option.name || "",
-              value: (option.name || "").toLowerCase().replace(/\s+/g, "-"),
-              price: option.price,
-            };
-          }
-          return { name: "", value: "" };
-        })
-        .filter((opt: any) => opt.name);
-    } catch (e) {
-      console.error("Помилка парсингу опцій:", e);
-      return [];
-    }
-  };
-
-  const parsedOptions = React.useMemo(() => parseOptions(options), [options]);
-
-  // Якщо варіантів немає або ще не вибрано - беремо ціну першого item
-  const firstItemPrice = items[0]?.price || 0;
-  const [selectedVariantPrice, setSelectedVariantPrice] =
-    React.useState<number>(firstItemPrice);
-
-  React.useEffect(() => {
-    if (parsedOptions.length > 0) {
-      if (selectedOption) {
-        const found = parsedOptions.find((o) => o.name === selectedOption);
-        if (found?.price) setSelectedVariantPrice(found.price);
-      } else {
-        const firstOption = parsedOptions[0];
-        handleOptionSelect(firstOption.name);
-        if (firstOption.price) setSelectedVariantPrice(firstOption.price);
-      }
-    } else {
-      if (items.length > 0) {
-        setSelectedVariantPrice(items[0].price);
-      }
-    }
-  }, [parsedOptions, selectedOption, handleOptionSelect, items]);
-
-  const handleOptionClick = (option: ProductOption) => {
-    handleOptionSelect(option.name);
-    if (option.price !== undefined) {
-      setSelectedVariantPrice(option.price);
-    }
-  };
+  // Якщо варіант не вибрано, беремо перший доступний
+  const currentItem = activeItem || items[0];
 
   const calculateTotalPrice = () => {
+    let price = currentItem ? currentItem.price : 0;
+
     let additionsPrice = 0;
     selectedAdditionally.forEach((id) => {
       const addition = additionally.find((a) => a.id === id);
       if (addition?.price) additionsPrice += addition.price;
     });
-    return selectedVariantPrice + additionsPrice;
+
+    return price + additionsPrice;
   };
 
   const totalPrice = calculateTotalPrice();
+  const isOutOfStock = currentItem ? currentItem.stock <= 0 : true;
 
   const handleSubmit = async (e?: React.MouseEvent) => {
     if (e) {
@@ -143,24 +73,16 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
       e.stopPropagation();
     }
 
-    const finalItemId = currentItemId || items[0]?.id;
-
-    if (finalItemId) {
+    if (currentItem) {
       try {
-        await onSubmit(finalItemId, Array.from(selectedAdditionally));
-        // ✅ Don't push router here - let the parent handle it
+        await onSubmit(currentItem.id, Array.from(selectedAdditionally));
       } catch (error) {
         console.error("Błąd pod czas dodawania:", error);
       }
     } else {
-      console.error("Nie można złożyć zamówienia: brak ID produktu");
+      console.error("Nie można złożyć zamówienia: brak wariantu");
     }
   };
-  // 1. Знаходимо активний елемент (варіацію), яку вибрав користувач
-  const activeItem = items.find((item) => item.options === selectedOption);
-
-  // 2. Перевіряємо, чи є він на складі
-  const isOutOfStock = activeItem ? activeItem.stock <= 0 : true;
 
   return (
     <div
@@ -170,11 +92,7 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
       {/* ЛІВА ЧАСТИНА (ФОТО) */}
       <div className="relative flex w-[50%] items-center justify-center overflow-hidden rounded-l-3xl bg-[#F5F5F7] p-6">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
-        <ProductImage
-          imageUrl={imageUrl}
-          id={id} // Передаємо ID для посилання
-          className="z-10"
-        />
+        <ProductImage imageUrl={imageUrl} id={id} className="z-10" />
       </div>
 
       {/* ПРАВА ЧАСТИНА (КОНТЕНТ) */}
@@ -192,45 +110,39 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
           </div>
 
           <div className="custom-scrollbar -mr-2 flex-1 space-y-6 overflow-y-auto pr-2">
-            {/* ВАРІАНТИ */}
-            {/* Показуємо попередження, тільки якщо товар є в наявності, але його мало */}
+            {/* ПОПЕРЕДЖЕННЯ ПРО МАЛИЙ ЗАЛИШОК */}
             {!isOutOfStock &&
-              activeItem &&
-              activeItem.stock < 4 &&
-              activeItem.stock > 0 && (
+              currentItem &&
+              currentItem.stock < 4 &&
+              currentItem.stock > 0 && (
                 <p className="rounded-lg border border-orange-100 bg-orange-50 p-2 text-sm font-medium text-orange-500">
-                  ⚠️ Zostało tylko {activeItem.stock} szt.!
+                  ⚠️ Zostało tylko {currentItem.stock} szt.!
                 </p>
               )}
 
-            {parsedOptions.length > 0 && (
+            {/* 🔥 НОВИЙ СПИСОК ВАРІАНТІВ (НА ОСНОВІ ITEMS) */}
+            {items.length > 0 && (
               <div>
                 <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800 opacity-80">
                   Wybierz wariant:
                 </h3>
                 <div className="flex flex-col gap-2.5">
-                  {parsedOptions.map((option) => {
-                    // Знаходимо реальний об'єкт товару з бази, щоб перевірити його stock
-                    const itemData = items.find(
-                      (i) => i.options === option.name,
-                    );
-                    const isItemDisabled = itemData
-                      ? itemData.stock <= 0
-                      : false;
+                  {items.map((item) => {
+                    const isItemDisabled = item.stock <= 0;
+                    const isSelected = selectedOption === item.options;
 
                     return (
                       <button
-                        key={option.value}
-                        // Блокуємо кнопку, якщо сток 0
+                        key={item.id} // Використовуємо унікальний ID з бази
                         disabled={isItemDisabled}
-                        onClick={() => handleOptionClick(option)}
+                        // Передаємо назву опції (напр. "Lewa") у хук
+                        onClick={() => handleOptionSelect(item.options || "")}
                         className={cn(
                           "group flex items-center justify-between rounded-xl border px-4 py-3 transition-all duration-200 ease-in-out",
                           "hover:shadow-md",
-                          // Стилі для заблокованого товару
                           isItemDisabled
                             ? "cursor-not-allowed border-gray-100 bg-gray-50 opacity-50 grayscale"
-                            : selectedOption === option.name
+                            : isSelected
                               ? "border-violet-600 bg-violet-50 shadow-sm ring-1 ring-violet-600/20"
                               : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50",
                         )}
@@ -239,14 +151,13 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
                           <span
                             className={cn(
                               "text-sm transition-colors",
-                              selectedOption === option.name && !isItemDisabled
+                              isSelected && !isItemDisabled
                                 ? "font-semibold text-violet-700"
                                 : "text-gray-700",
                             )}
                           >
-                            {option.name}
+                            {item.options || "Standard"}
                           </span>
-                          {/* Додаємо напис, якщо варіанту немає */}
                           {isItemDisabled && (
                             <span className="text-[10px] font-bold uppercase text-red-500">
                               Brak w magazynie
@@ -254,17 +165,16 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
                           )}
                         </div>
 
-                        {/* Ціну показуємо тільки якщо товар доступний */}
-                        {!isItemDisabled && option.price !== undefined && (
+                        {!isItemDisabled && (
                           <span
                             className={cn(
                               "text-sm font-medium",
-                              selectedOption === option.name
+                              isSelected
                                 ? "text-violet-900"
                                 : "text-gray-500 group-hover:text-gray-900",
                             )}
                           >
-                            {option.price} zł
+                            {item.price} zł
                           </span>
                         )}
                       </button>
@@ -276,7 +186,6 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
 
             {/* ДОДАТКИ */}
             {additionally.length > 0 && (
-              // 👇 ЗМІНИ ТУТ: Додаємо фон, відступи та заокруглення
               <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
                 <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800 opacity-80">
                   Dodatki:
@@ -317,15 +226,15 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
               "bg-violet-600 text-white hover:bg-violet-700",
             )}
             onClick={(e) => {
-              e.preventDefault(); // Зупиняє дію по замовчуванню
-              e.stopPropagation(); // 🛑 ЗУПИНЯЄ "ПРОБИТТЯ" КЛІКУ ПО ІНШИХ ПОСИЛАННЯХ
-              handleSubmit(); // Викликаємо твою стандартну функцію
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit();
             }}
-            disabled={loading || totalPrice === 0}
+            disabled={loading || totalPrice === 0 || isOutOfStock}
           >
             {isOutOfStock ? (
-              <span className="backgraund-red flex items-center gap-2">
-                <PackageX size={20} /> {/* Іконка "немає в наявності" */}
+              <span className="flex items-center gap-2">
+                <PackageX size={20} />
                 Brak w magazynie
               </span>
             ) : loading ? (

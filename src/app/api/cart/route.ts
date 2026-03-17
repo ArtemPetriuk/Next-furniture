@@ -5,93 +5,88 @@ import { getUserSession } from "@/lib/get-user-session";
 import { updateCartTotalAmount } from "@/lib/update-cart-total-amount";
 import { findOrCreateCart } from "@/lib/find-or-create-cart";
 import { CreateCartItemValues } from "@/components/shared/services/dto/cart.dto";
+import { cookies } from "next/headers";
+import { getToken } from "next-auth/jwt";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("cartToken")?.value;
-    const user = await getUserSession();
-    const userId = user?.id ? Number(user.id) : null;
+    const cookieStore = cookies();
+    const cartToken = cookieStore.get("cartToken")?.value;
 
-    let userCart;
-
-    if (userId) {
-      const actualUser = await prisma.user.findFirst({ where: { id: userId } });
-      // 1. Шукаємо кошик користувача за userId
-      userCart = await prisma.cart.findFirst({
-        where: { userId },
-        include: {
-          items: {
-            orderBy: { createdAt: "desc" },
-            include: {
-              productItem: { include: { product: true } },
-              additionally: true,
-            },
-          },
-        },
-      });
-
-      // 2. Якщо у юзера в акаунті НЕМАЄ кошика, але є анонімний у куках
-      if (!userCart && token) {
-        const anonymousCart = await prisma.cart.findFirst({
-          where: { token, userId: null },
-        });
-
-        if (anonymousCart) {
-          // Прив'язуємо анонімний кошик до юзера
-          userCart = await prisma.cart.update({
-            where: { id: anonymousCart.id },
-            data: { userId },
-            include: {
-              items: {
-                orderBy: { createdAt: "desc" },
-                include: {
-                  productItem: { include: { product: true } },
-                  additionally: true,
-                },
-              },
-            },
-          });
-        }
-      }
-    } else if (token) {
-      // 3. Якщо анонім — просто за токеном
-      userCart = await prisma.cart.findFirst({
-        where: { token },
-        include: {
-          items: {
-            orderBy: { createdAt: "desc" },
-            include: {
-              productItem: { include: { product: true } },
-              additionally: true,
-            },
-          },
-        },
-      });
+    if (!cartToken) {
+      return NextResponse.json({ items: [] });
     }
+
+    // 1. Отримуємо кошик
+    const userCart = await prisma.cart.findFirst({
+      where: { token: cartToken },
+      include: {
+        items: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            productItem: { include: { product: true } },
+            additionally: true,
+          },
+        },
+      },
+    });
 
     if (!userCart) {
-      return NextResponse.json({ totalAmount: 0, items: [] });
+      return NextResponse.json({ items: [] });
     }
 
-    const resp = NextResponse.json(userCart);
+    // 2. Отримуємо сесію, щоб дізнатися, чи це залогований юзер
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    let userId: number | null = null;
 
-    // Вирішуємо помилку TS зі скріншота
-    if (userCart.token) {
-      resp.cookies.set("cartToken", userCart.token, { path: "/" });
+    // 3. ЯКЩО ЮЗЕР ЗАЛОГОВАНИЙ: Шукаємо його реальний ID в базі
+    if (token?.email) {
+      const user = await prisma.user.findFirst({
+        where: { email: token.email as string },
+      });
+      if (user) {
+        userId = user.id;
+      }
     }
 
-    return resp;
+    // 4. Перераховуємо суму (на випадок зміни цін в адмінці)
+    const totalAmount = userCart.items.reduce((acc, item) => {
+      const additionalPrice = item.additionally.reduce(
+        (acc, opt) => acc + opt.price,
+        0,
+      );
+      return acc + (item.productItem.price + additionalPrice) * item.quantity;
+    }, 0);
+
+    // 5. Оновлюємо кошик (прив'язуємо до userId ТІЛЬКИ якщо ми його знайшли)
+    const updatedCart = await prisma.cart.update({
+      where: { id: userCart.id },
+      data: {
+        totalAmount,
+        ...(userId ? { userId } : {}), // Оновлюємо userId тільки якщо він існує і коректний
+      },
+      include: {
+        items: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            productItem: { include: { product: true } },
+            additionally: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(updatedCart);
   } catch (error) {
-    console.error("[CART GET] Error:", error);
+    console.error("[CART_GET] Server Error", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { message: "Internal Server Error" },
       { status: 500 },
     );
   }
 }
-
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const data = body as CreateCartItemValues;

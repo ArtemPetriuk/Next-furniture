@@ -3,16 +3,22 @@ import { getUserSession } from "@/lib/get-user-session"; // 👈 ОБОВ'ЯЗК
 import { OrderHistory } from "@/components/shared/order-history";
 import { ProfileForm } from "@/components/shared/profile-form";
 import prisma from "@prisma/prisma-client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 export default async function ProfilePage() {
-  const session = await getUserSession();
+  const session = await getServerSession(authOptions); // Zostaw swoją metodę pobierania sesji
 
-  if (!session) {
+  // Upewnij się, że mamy sesję i email
+  if (!session || !session.user || !session.user.email) {
     return redirect("/");
   }
 
+  // ✅ POPRAWNE: Szukamy użytkownika po jego unikalnym emailu z Google
   const user = await prisma.user.findFirst({
-    where: { id: Number(session.id) },
+    where: {
+      email: session.user.email,
+    },
   });
 
   if (!user) {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-
+import { AdminButton } from "@/components/shared/admin/admin-button";
 import { Header } from "@/components/shared/header";
 
 export const metadata: Metadata = {
@@ -21,6 +21,7 @@ export default function HomeLayout({
     <main className="min-h-screen">
       <Header />
       {children}
+      <AdminButton />
       {modal}
     </main>
   );

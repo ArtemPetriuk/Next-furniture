@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "../../prisma/prisma-client";
+import prisma from "../../../prisma/prisma-client";
 import { getUserSession } from "@/lib/get-user-session";
 import { Prisma } from "@prisma/client";
 import { hashSync } from "bcrypt";
@@ -10,7 +10,7 @@ export async function updateUserInfo(body: Prisma.UserUpdateInput) {
     const currentUser = await getUserSession();
 
     if (!currentUser) {
-      throw new Error("Користувача не знайдено");
+      throw new Error("User not authenticated");
     }
 
     const userId = Number(currentUser.id);

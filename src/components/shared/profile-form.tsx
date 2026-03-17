@@ -3,7 +3,7 @@
 import React from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { User } from "@prisma/client";
-import { updateUserInfo } from "@/app/actions";
+import { updateUserInfo } from "@/app/actions/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
