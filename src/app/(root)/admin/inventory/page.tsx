@@ -1,4 +1,4 @@
-import prisma from "../../../../../prisma/prisma-client"; // Виправив шлях імпорту для чистоти
+import prisma from "../../../../../prisma/prisma-client";
 import {
   Table,
   TableBody,
@@ -10,8 +10,8 @@ import {
 import { StockInput } from "@/components/shared/admin/stock-input";
 import { AdminSearch } from "@/components/shared/admin/admin-search";
 import { PriceInput } from "@/components/shared/admin/price-input";
-
-// export const dynamic = "force-dynamic";
+// 👇 Імпортуємо нашу нову кнопку
+import { DeleteVariantButton } from "@/components/shared/admin/delete-variant-button";
 
 export default async function InventoryPage({
   searchParams,
@@ -35,7 +35,6 @@ export default async function InventoryPage({
 
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-md">
-      {/* 👇 БАТЬКІВСЬКИЙ DIV (Parent) */}
       <div className="mb-8 flex flex-col items-center gap-6 md:flex-row">
         <h1 className="whitespace-nowrap text-3xl font-bold text-gray-800">
           📦 Zarządzanie magazynem
@@ -50,13 +49,12 @@ export default async function InventoryPage({
               <TableHead className="rounded-l-xl">Produkt</TableHead>
               <TableHead>Wariant</TableHead>
               <TableHead>Cena</TableHead>
-              <TableHead className="rounded-r-xl text-center">
-                Ilość (Szt.)
-              </TableHead>
+              <TableHead className="text-center">Ilość (Szt.)</TableHead>
+              {/* 👇 Нова порожня колонка для кнопки видалення */}
+              <TableHead className="w-10 rounded-r-xl"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* 👇 СПИСОК (List Rendering) */}
             {items.map((item) => (
               <TableRow
                 key={item.id}
@@ -73,6 +71,10 @@ export default async function InventoryPage({
                 </TableCell>
                 <TableCell className="flex justify-center">
                   <StockInput id={item.id} initialStock={item.stock} />
+                </TableCell>
+                {/* 👇 Кнопка видалення */}
+                <TableCell className="text-right">
+                  <DeleteVariantButton id={item.id} />
                 </TableCell>
               </TableRow>
             ))}

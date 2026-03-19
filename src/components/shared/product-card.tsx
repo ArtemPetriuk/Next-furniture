@@ -4,6 +4,8 @@ import { Title } from "./title";
 import { Button } from "../ui";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+// 👇 1. Importujemy nasz nowy przycisk
+import { FavoriteButton } from "./favorite-button";
 
 interface Props {
   id: number;
@@ -12,6 +14,8 @@ interface Props {
   imageUrl: string;
   description?: string;
   className?: string;
+  // 👇 2. Dodajemy nowy prop, żebyśmy wiedzieli, czy serduszko ma być czerwone od razu
+  isFavorite?: boolean;
 }
 
 export const ProductCard: React.FC<Props> = ({
@@ -21,33 +25,40 @@ export const ProductCard: React.FC<Props> = ({
   imageUrl,
   description,
   className,
+  isFavorite = false, // Domyślnie szare
 }) => {
   return (
-    // 1. ЗОВНІШНІЙ КОНТЕЙНЕР (Невидимий, стабільний)
+    // 1. ZEWNĘTRZNY KONTENER
     <div className={cn("group h-full w-full", className)}>
-      {/* 2. ВНУТРІШНЯ КАРТКА (Анімована) */}
+      {/* 2. WEWNĘTRZNA KARTA */}
       <div
         className={cn(
-          "h-full w-full rounded-3xl border border-gray-100 bg-white p-4 shadow-sm",
-          // 👇 МАГІЯ ТУТ:
+          // 👇 Dodano 'relative', aby pozycjonowanie serduszka działało poprawnie
+          "relative h-full w-full rounded-3xl border border-gray-100 bg-white p-4 shadow-sm",
           "transition-all duration-300 ease-in-out",
-          "transform-gpu will-change-transform", // 👈 Це прибирає мікро-тряску
-
-          // Hover ефекти (активуються при наведенні на батьківську group)
+          "transform-gpu will-change-transform",
           "group-hover:-translate-y-2 group-hover:border-violet-200 group-hover:shadow-xl",
         )}
       >
+        {/* 👇 3. NASZE SERDUSZKO! (Unosi się nad całą kartą) */}
+        <FavoriteButton
+          productId={id}
+          initialIsFavorite={isFavorite}
+          className="absolute right-7 top-7 z-20" // Z-20 gwarantuje, że jest nad zdjęciem i linkiem
+        />
+
+        {/* 👇 LINK DO PRODUKTU (Kliknięcie w kartę, ale nie w serduszko) */}
         <Link href={`/product/${id}`}>
-          {/* Блок картинки */}
+          {/* Blok zdjęcia */}
           <div className="relative flex h-[260px] items-center justify-center overflow-hidden rounded-2xl bg-[#F5F5F7]">
             <img
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" // Додав легкий зум картинки для краси (можна прибрати)
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               src={imageUrl}
               alt={name}
             />
           </div>
 
-          {/* Інформація про товар */}
+          {/* Informacje o towarze */}
           <div className="pt-4">
             <Title
               text={name}

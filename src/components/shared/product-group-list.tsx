@@ -16,6 +16,7 @@ interface Props {
   categoryId: number;
   className?: string;
   listClassName?: string;
+  favoriteIds?: number[];
 }
 
 export const ProductsGroupList: React.FC<Props> = ({
@@ -24,6 +25,7 @@ export const ProductsGroupList: React.FC<Props> = ({
   listClassName,
   categoryId,
   className,
+  favoriteIds = [],
 }) => {
   const setActiveCategoryId = useCategoryStore((state) => state.setActiveId);
   const intersectionRef = React.useRef(null);
@@ -50,6 +52,7 @@ export const ProductsGroupList: React.FC<Props> = ({
             imageUrl={product.imageUrl}
             price={product.items?.[0]?.price ?? product.price ?? 0}
             description={product.description}
+            isFavorite={favoriteIds.includes(product.id)}
           />
         ))}
         <Link

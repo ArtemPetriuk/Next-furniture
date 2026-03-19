@@ -25,6 +25,7 @@ model User {
     cart             Cart?
      orders           Order[]
     verificationCode VerificationCode?
+    favorites Favorite[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -54,6 +55,7 @@ model Product {
 
      category   Category @relation(fields: [categoryId], references: [id])
      categoryId Int
+     favorites Favorite[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -164,6 +166,20 @@ model VerificationCode {
     createdAt DateTime @default(now())
 
     @@unique([userId, code])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
 }
 
 

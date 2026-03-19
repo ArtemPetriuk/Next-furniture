@@ -12,6 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { SearchInput } from "./search-input";
 import { useSession } from "next-auth/react";
+import { Heart } from "lucide-react";
 
 interface Props {
   categories: Category[];
@@ -42,16 +43,13 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
     <div
       className={cn(
         "sticky top-0 z-10 bg-white shadow-lg shadow-black/5 transition-all",
-        isScrolled ? "py-5" : "py-6", // Трохи зменшив висоту при скролі
+        isScrolled ? "py-5" : "py-6",
         className,
       )}
     >
       <div
         className={cn(
           "mx-auto flex items-center justify-between transition-all duration-300",
-          // 👇 ЛОГІКА ШИРИНИ:
-          // isScrolled -> px-10 (майже на весь екран).
-          // Normal -> max-w-[1280px] (стандартний контейнер).
           isScrolled ? "w-full px-6" : "max-w-[1280px] px-4",
         )}
       >
@@ -104,14 +102,10 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
           </div>
 
           {/* Сортування */}
-          {/* 👇 ТУТ МАГІЯ:
-              Якщо isScrolled -> застосовуємо клас [&>b:first-of-type]:hidden
-              Це CSS-селектор, який знаходить перший жирний текст (Sortowanie) і ховає його.
-          */}
           <div className="origin-right scale-95 transition-transform hover:scale-100">
             <SortPopup
               className={cn(
-                isScrolled && "gap-1 px-3 [&>b:first-of-type]:hidden", // Ховаємо текст "Sortowanie"
+                isScrolled && "gap-1 px-3 [&>b:first-of-type]:hidden",
               )}
             />
           </div>
@@ -119,17 +113,23 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
           {/* Кнопки */}
           <div
             className={cn(
-              "flex items-center gap-4 overflow-hidden transition-all duration-300",
+              "flex items-center gap-3 overflow-hidden transition-all duration-300",
               isScrolled
                 ? "ml-4 w-auto translate-x-0 border-l pl-4 opacity-100"
                 : "pointer-events-none w-0 translate-x-5 opacity-0",
             )}
           >
+            {/* 👇 НОВА КНОПКА "УЛЮБЛЕНІ" ДЛЯ TOPBAR */}
+            <Link
+              href="/favorites"
+              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 font-bold text-red-500 shadow-sm transition-all hover:scale-105 hover:shadow-md active:scale-95"
+            >
+              <Heart size={18} className="text-red-500" />
+            </Link>
+
             {!session ? (
-              // Якщо НЕ залогінений -> відкриваємо модалку входу
               <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
             ) : (
-              // Якщо ЗАЛОГІНЕНИЙ -> йдемо в профіль і НЕ передаємо функцію відкриття модалки
               <Link href="/profile">
                 <ProfileButton />
               </Link>

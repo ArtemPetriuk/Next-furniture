@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // 👈 Додав useEffect
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog"; // shadcn компонент
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { LoginForm } from "../auth/login-form";
 import { RegisterForm } from "../auth/register-form";
 import { signIn } from "next-auth/react";
@@ -19,31 +19,36 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     setType(type === "login" ? "register" : "login");
   };
 
+  // 👇 ФІКС: Кожного разу, коли open стає true (модалка відкривається),
+  // ми примусово ставимо тип "login"
+  useEffect(() => {
+    if (open) {
+      setType("login");
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[450px] bg-white p-10">
+      <DialogContent className="w-[450px] rounded-3xl bg-white p-10">
+        {" "}
+        {/* Додав закруглення для стилю */}
         {/* Показуємо форму залежно від типу */}
         {type === "login" ? (
           <LoginForm onClose={onClose} />
         ) : (
           <RegisterForm onClose={onClose} />
         )}
-
-        <hr />
-
-        {/* Кнопки Google / GitHub */}
-        <div className="flex gap-2">
+        <hr className="my-4" />
+        <div className="flex flex-col gap-3">
+          {" "}
+          {/* Змінив на flex-col для кращого вигляду */}
+          {/* Кнопка Google */}
           <Button
             variant="secondary"
             onClick={() => signIn("google", { callbackUrl: "/" })}
-            className="flex w-full items-center justify-center gap-2 border border-gray-200"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-gray-200"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -63,12 +68,15 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
             </svg>
             Google
           </Button>
-          {/* Можна додати GitHub аналогічно */}
+          {/* Кнопка перемикання LOGIN/REGISTER */}
+          <Button
+            variant="outline"
+            onClick={onSwitchType}
+            className="h-12 rounded-xl border-violet-200 text-violet-600 hover:bg-violet-50"
+          >
+            {type === "login" ? "Rejestracja" : "Logowanie"}
+          </Button>
         </div>
-
-        <Button variant="outline" onClick={onSwitchType} className="h-12">
-          {type === "login" ? "Rejestracja" : "Logowanie"}
-        </Button>
       </DialogContent>
     </Dialog>
   );

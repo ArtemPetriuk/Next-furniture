@@ -117,7 +117,7 @@ export const SearchInput: React.FC<Props> = ({
             </div>
           ) : (
             <div className="px-4 py-4 text-center text-sm text-gray-500">
-              {searchQuery ? "Товарів не знайдено" : "Почніть вводити назву..."}
+              {searchQuery ? "nie znaleziono produktów" : "Szukaj produktów..."}
             </div>
           )}
         </div>

@@ -8,7 +8,10 @@ import Link from "next/link";
 import { SearchInput } from "./search-input";
 import { CartButton } from "./cart-button";
 import { AuthModal } from "./modals/auth-modal";
-import { ProfileButton } from "./profile-button"; // 👈 Імпорт нового компонента
+import { ProfileButton } from "./profile-button";
+// 👇 Додані імпорти для кнопки улюблених
+import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   className?: string;
@@ -55,11 +58,21 @@ export const Header: React.FC<Props> = ({
 
         {/* Права частина */}
         <div className="flex items-center gap-3">
-          {/* 👇 ТУТ ТЕПЕР ЧИСТО І ГАРНО */}
           <AuthModal
             open={openAuthModal}
             onClose={() => setOpenAuthModal(false)}
           />
+
+          {/* 👇 НОВА КНОПКА "УЛЮБЛЕНІ" */}
+          <Link href="/favorites">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 rounded-xl border-gray-200 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+            >
+              <Heart size={16} />
+              <span className="hidden font-bold sm:inline">Ulubione</span>
+            </Button>
+          </Link>
 
           <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
 

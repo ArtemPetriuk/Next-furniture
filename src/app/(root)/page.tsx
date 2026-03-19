@@ -2,9 +2,12 @@ import { Container } from "@/components/shared/container";
 import { Title } from "@/components/shared/title";
 import { TopBar } from "@/components/shared/top-bar";
 import { Filters } from "@/components/shared/filters";
-import { ProductsGroupList } from "@/components/shared/product-group-list"; // Перевір назву файлу
+import { ProductsGroupList } from "@/components/shared/product-group-list";
 import { Suspense } from "react";
-import { findFurniture, GetSearchParams } from "@/lib/find-furniture"; // Імпортуємо нашу функцію
+import { findFurniture, GetSearchParams } from "@/lib/find-furniture";
+// 👇 1. Додаємо імпорти для бази та сесії
+import { getServerSession } from "next-auth/next";
+import prisma from "@prisma/prisma-client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,8 +17,24 @@ export default async function Home({
 }: {
   searchParams: GetSearchParams;
 }) {
-  // 🔥 Вся логіка тепер тут, в одному рядку:
   const filteredCategories = await findFurniture(searchParams);
+
+  // 👇 2. ЛОГІКА ДЛЯ УЛЮБЛЕНИХ ТОВАРІВ
+  const session = await getServerSession();
+  // Використовуємо масив замість Set, бо масиви краще передаються в інші компоненти у Next.js
+  let favoriteProductIds: number[] = [];
+
+  if (session?.user?.email) {
+    const safeEmail = String(session.user.email).trim().toLowerCase();
+
+    const userFavorites = await prisma.favorite.findMany({
+      where: { user: { email: safeEmail } },
+      select: { productId: true },
+    });
+
+    favoriteProductIds = userFavorites.map((fav) => fav.productId);
+  }
+  // 👆 КІНЕЦЬ НОВОЇ ЛОГІКИ
 
   return (
     <>
@@ -43,6 +62,8 @@ export default async function Home({
                   title={category.name}
                   categoryId={category.id}
                   items={category.products}
+                  // 👇 3. ПЕРЕДАЄМО МАСИВ З ID УЛЮБЛЕНИХ ТОВАРІВ
+                  favoriteIds={favoriteProductIds}
                 />
               ))}
 

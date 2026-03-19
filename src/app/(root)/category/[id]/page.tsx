@@ -2,11 +2,12 @@ export const dynamic = "force-dynamic"; // 👈 ДОДАЙ ЦЕЙ РЯДОК
 export const revalidate = 0; // 👈 І ЦЕЙ ДЛЯ НАДІЙНОСТІ
 
 import { Container } from "@/components/shared/container";
-// ... далі твої імпорти ...
 import { Title } from "@/components/shared/title";
-import prisma from "../../../../../prisma/prisma-client";
+import prisma from "@prisma/prisma-client"; // Трохи підправив імпорт для надійності
 import { ProductCard } from "@/components/shared/product-card";
 import { notFound } from "next/navigation";
+// 👇 1. ІМПОРТУЄМО СЕСІЮ
+import { getServerSession } from "next-auth/next";
 
 interface Props {
   params: { id: string };
@@ -48,6 +49,25 @@ export default async function CategoryPage({
     );
   }
 
+  // 👇 2. НОВА ЛОГІКА ДЛЯ УЛЮБЛЕНИХ ТОВАРІВ 👇
+  const session = await getServerSession();
+  let favoriteProductIds = new Set<number>();
+
+  if (session?.user?.email) {
+    // Беремо email так само надійно, як і в екшені
+    const safeEmail = String(session.user.email).trim().toLowerCase();
+
+    // Шукаємо всі лайки цього юзера
+    const userFavorites = await prisma.favorite.findMany({
+      where: { user: { email: safeEmail } },
+      select: { productId: true },
+    });
+
+    // Записуємо їхні ID у Set для швидкої перевірки
+    favoriteProductIds = new Set(userFavorites.map((fav) => fav.productId));
+  }
+  // 👆 КІНЕЦЬ НОВОЇ ЛОГІКИ 👆
+
   return (
     <Container className="mt-10 pb-10">
       <Title text={category.name} size="lg" className="mb-8 font-extrabold" />
@@ -59,6 +79,8 @@ export default async function CategoryPage({
             name={product.name}
             imageUrl={product.imageUrl}
             price={product.items[0]?.price || 0}
+            // 👇 3. ПЕРЕДАЄМО СТАТУС СЕРДЕЧКА В КАРТКУ 👇
+            isFavorite={favoriteProductIds.has(product.id)}
           />
         ))}
       </div>
