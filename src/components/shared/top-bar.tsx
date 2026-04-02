@@ -119,12 +119,13 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
                 : "pointer-events-none w-0 translate-x-5 opacity-0",
             )}
           >
-            {/* 👇 НОВА КНОПКА "УЛЮБЛЕНІ" ДЛЯ TOPBAR */}
+            {/* 👇 ВИПРАВЛЕНА КНОПКА "УЛЮБЛЕНІ" */}
             <Link
               href="/favorites"
-              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 font-bold text-red-500 shadow-sm transition-all hover:scale-105 hover:shadow-md active:scale-95"
+              // Замінили тінь на акуратну рамку, зробили ідеальний квадрат (w-11 h-11)
+              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-red-500 transition-all hover:border-gray-300 hover:bg-gray-50 active:scale-95"
             >
-              <Heart size={18} className="text-red-500" />
+              <Heart size={20} className="text-red-500" />
             </Link>
 
             {!session ? (

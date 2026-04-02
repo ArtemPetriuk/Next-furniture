@@ -95,6 +95,7 @@ async function up() {
     5: [], // Крісла
     6: [], // Полиці
     7: [12, 13, 14, 15], // Садові меблі
+    8: [],
   };
 
   // 5. ПРОДУКТИ
@@ -109,6 +110,8 @@ async function up() {
         .map((f) => ({ id: f.id }));
 
       const additionallyIds = categoryAdditionallyMap[categoryId] || [];
+
+      const productColors = product.colors || [];
 
       return prisma.product.create({
         data: {
@@ -129,6 +132,16 @@ async function up() {
           filterOptions: {
             connect: connectFilters,
           },
+          ...(productColors.length > 0 && {
+            colors: {
+              create: productColors.map(
+                (color: { name: string; hex: string }) => ({
+                  name: color.name,
+                  hex: color.hex,
+                }),
+              ),
+            },
+          }),
         },
       });
     }),

@@ -27,7 +27,11 @@ export const ProductForm: React.FC<Props> = ({
   // Тому що options тепер лежать у самому product.
   const isFurnitureForm = Boolean(product.items.length > 0);
 
-  const onSubmit = async (productItemId?: number, additionally?: number[]) => {
+  const onSubmit = async (
+    productItemId?: number,
+    additionally?: number[],
+    colorId?: number,
+  ) => {
     try {
       const itemId = productItemId ?? firstItem?.id;
 
@@ -66,6 +70,7 @@ export const ProductForm: React.FC<Props> = ({
         onSubmit={onSubmit}
         loading={loading}
         id={product.id}
+        colors={product.colors}
       />
     );
   }

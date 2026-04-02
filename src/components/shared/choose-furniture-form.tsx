@@ -1,25 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Additionally, ProductItem } from "@prisma/client";
+// 👇 Додали імпорт Color
+import { Additionally, ProductItem, Color } from "@prisma/client";
 import { PackageX } from "lucide-react";
 import { ProductImage } from "./product-image";
 import { Title } from "./title";
 import { Button } from "../ui";
 import { Additionallys } from "./additionally";
 import { useFurnitureOptions } from "../hooks/use-furniture-option";
-import { useRouter } from "next/navigation";
 
 interface Props {
   imageUrl: string;
   name: string;
   additionally?: Additionally[];
+  colors?: Color[]; // 👈 ДОДАЛИ КОЛЬОРИ СЮДИ
   items: ProductItem[];
   loading?: boolean;
-  onSubmit: (itemId: number, additionally: number[]) => void;
+  // 👇 ТЕПЕР TYPESCRIPT ЗНАЄ ПРО 3-Й АРГУМЕНТ (colorId)
+  onSubmit: (itemId: number, additionally: number[], colorId?: number) => void;
   className?: string;
-  // options?: any; // Більше не потрібно, дані беремо з items
   id: number;
   description?: string | null;
 }
@@ -31,8 +32,8 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
   loading,
   onSubmit,
   className,
-  // options,
   additionally = [],
+  colors = [], // 👈 ПРИЙМАЄМО КОЛЬОРИ З ПРОПСІВ
   id,
   description,
 }) => {
@@ -46,10 +47,12 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
     handleOptionSelect,
   } = useFurnitureOptions(items);
 
-  // Знаходимо активний елемент (варіацію), яку вибрав користувач
-  const activeItem = items.find((item) => item.options === selectedOption);
+  // 👇 ДОДАЛИ СТАН ДЛЯ ВИБОРУ КОЛЬОРУ
+  const [selectedColor, setSelectedColor] = useState<Color | null>(
+    colors.length > 0 ? colors[0] : null,
+  );
 
-  // Якщо варіант не вибрано, беремо перший доступний
+  const activeItem = items.find((item) => item.options === selectedOption);
   const currentItem = activeItem || items[0];
 
   const calculateTotalPrice = () => {
@@ -75,7 +78,12 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
 
     if (currentItem) {
       try {
-        await onSubmit(currentItem.id, Array.from(selectedAdditionally));
+        // 👇 ТЕПЕР ПОМИЛКИ НЕ БУДЕ, БО МИ ОНОВИЛИ INTERFACE
+        await onSubmit(
+          currentItem.id,
+          Array.from(selectedAdditionally),
+          selectedColor?.id,
+        );
       } catch (error) {
         console.error("Błąd pod czas dodawania:", error);
       }
@@ -120,7 +128,7 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
                 </p>
               )}
 
-            {/* 🔥 НОВИЙ СПИСОК ВАРІАНТІВ (НА ОСНОВІ ITEMS) */}
+            {/* СПИСОК ВАРІАНТІВ */}
             {items.length > 0 && (
               <div>
                 <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800 opacity-80">
@@ -133,9 +141,8 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
 
                     return (
                       <button
-                        key={item.id} // Використовуємо унікальний ID з бази
+                        key={item.id}
                         disabled={isItemDisabled}
-                        // Передаємо назву опції (напр. "Lewa") у хук
                         onClick={() => handleOptionSelect(item.options || "")}
                         className={cn(
                           "group flex items-center justify-between rounded-xl border px-4 py-3 transition-all duration-200 ease-in-out",
@@ -183,6 +190,38 @@ export const ChooseFurnitureForm: React.FC<Props> = ({
                 </div>
               </div>
             )}
+
+            {/* Головний контейнер: Flex-ряд, вирівнювання по центру, відступи між елементами */}
+            <div className="ml-4 flex items-center gap-3">
+              {colors.map((color) => (
+                <button
+                  key={color.id}
+                  type="button"
+                  // 👇 ТУТ ВИПРАВИЛИ: Передаємо ВЕСЬ об'єкт color, а не тільки його id
+                  onClick={() => setSelectedColor(color)}
+                  className={cn(
+                    "h-10 w-10 rounded-full border-2 border-gray-200 bg-white p-0.5 shadow-inner transition-all hover:border-gray-300",
+                    // 👇 ТУТ ВИПРАВИЛИ: Порівнюємо id нашого вибраного об'єкта з поточним
+                    selectedColor?.id === color.id &&
+                      "scale-105 border-primary shadow-lg ring-2 ring-primary ring-offset-2",
+                  )}
+                  title={color.name}
+                >
+                  <span
+                    className="block h-full w-full rounded-full border border-black/10"
+                    style={{ backgroundColor: color.hex }}
+                  />
+                </button>
+              ))}
+
+              {/* Підпис назви вибраного кольору праворуч від кружечків */}
+              <span className="ml-2 text-sm text-gray-600">
+                <span className="font-medium text-gray-900">
+                  {/* 👇 ТУТ ВИПРАВИЛИ: Оскільки selectedColor - це об'єкт, ми можемо просто взяти його ім'я! Ніяких .find() не треба! */}
+                  {selectedColor?.name}
+                </span>
+              </span>
+            </div>
 
             {/* ДОДАТКИ */}
             {additionally.length > 0 && (

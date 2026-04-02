@@ -58,27 +58,30 @@ export const Footer: React.FC<Props> = ({ className }) => {
             <h3 className="mb-4 text-lg font-bold">Oferta</h3>
             <ul className="flex flex-col gap-2 text-sm text-gray-500">
               <li>
-                <Link href="/" className="transition hover:text-primary">
+                <Link href="/#Sofy" className="transition hover:text-primary">
                   Sofy
                 </Link>
               </li>
               <li>
-                <Link href="/" className="transition hover:text-primary">
+                <Link href="/#Stoly" className="transition hover:text-primary">
                   Stoły
                 </Link>
               </li>
               <li>
-                <Link href="/" className="transition hover:text-primary">
+                <Link href="/#Szafy" className="transition hover:text-primary">
                   Szafy
                 </Link>
               </li>
               <li>
-                <Link href="/" className="transition hover:text-primary">
+                <Link href="/#Lóżka" className="transition hover:text-primary">
                   Łóżka
                 </Link>
               </li>
               <li>
-                <Link href="/" className="transition hover:text-primary">
+                <Link
+                  href="/#Krzesła"
+                  className="transition hover:text-primary"
+                >
                   Krzesła
                 </Link>
               </li>

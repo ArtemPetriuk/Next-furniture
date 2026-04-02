@@ -20,6 +20,7 @@ export default async function ProductModalPage({
     include: {
       additionally: true,
       items: true,
+      colors: true,
     },
   });
 
