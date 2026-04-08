@@ -14,87 +14,87 @@ export const _additionally = [
   {
     name: "Wymiana obicia (skóra ekologiczna)",
     price: 1299, // PLN
-    imageUrl: "/images/milano.webp",
+    imageUrl: "/images/szkora.png",
   },
   {
     name: "Dodatkowe poduszki (komplet 4 szt)",
     price: 349, // PLN
-    imageUrl: "",
+    imageUrl: "/images/poduszki.png",
   },
   {
     name: "Mechanizm rozkładany (funkcja spania)",
     price: 899, // PLN
-    imageUrl: "",
+    imageUrl: "/images/Mec.png",
   },
   {
     name: "Podnóżek dopasowany kolorystycznie",
     price: 449, // PLN
-    imageUrl: "",
+    imageUrl: "/images/podn.png",
   },
 
   // 🍽️ Stoły (categoryId: 2)
   {
     name: "Powłoka antypoślizgowa premium",
     price: 299, // PLN
-    imageUrl: "",
+    imageUrl: "/images/pow.png",
   },
   {
     name: "Krzesło obiadowe (pojedyncze)",
     price: 399, // PLN
-    imageUrl: "",
+    imageUrl: "/images/krzes.png",
   },
   {
     name: "Nakładka ochronna ze szkła hartowanego",
     price: 499, // PLN
-    imageUrl: "",
+    imageUrl: "/images/nakladka.png",
   },
 
   // 🚪 Szafy (categoryId: 3)
   {
     name: "System oświetlenia LED (z czujnikiem ruchu)",
     price: 799, // PLN
-    imageUrl: "",
+    imageUrl: "/images/led.png",
   },
   {
     name: "Komplet wieszaków premium (10 szt)",
     price: 199, // PLN
-    imageUrl: "",
+    imageUrl: "/images/wieszak.png",
   },
 
   // 🛏️ Łóżka (categoryId: 4)
   {
     name: "Stelaż ortopedyczny z regulacją",
     price: 999, // PLN
-    imageUrl: "",
+    imageUrl: "/images/lozko.png",
   },
   {
     name: "Pokrowiec antyalergiczny",
     price: 449, // PLN
-    imageUrl: "",
+    imageUrl: "/images/anty.png",
   },
 
   // 🌿 Meble ogrodowe (categoryId: 7)
   {
     name: "Pokrowiec wodoodporny (sezonowy)",
     price: 349, // PLN
-    imageUrl: "",
+    imageUrl: "/images/woda.png",
   },
   {
     name: "Komplet poduszek ogrodowych (4 szt)",
     price: 299, // PLN
-    imageUrl: "",
+    imageUrl: "/images/ogorod.png",
   },
 
   // 🔧 Usługi
   {
     name: "Profesjonalny montaż u klienta",
     price: 399, // PLN
-    imageUrl: "",
+    imageUrl: "/images/klucz.png",
   },
   {
     name: "Gwarancja rozszerzona 5+ lat",
     price: 599, // PLN
-    imageUrl: "",
+    imageUrl: "/images/garantija.png",
   },
 ].map((obj, index) => ({ id: index + 1, ...obj }));
 
