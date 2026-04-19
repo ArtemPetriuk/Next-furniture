@@ -162,7 +162,7 @@ export const products = [
   },
   {
     name: "Kanapa Oslo",
-    imageUrl: "/images/oslo.webp",
+    imageUrl: "/images/osloTes.webp",
     categoryId: 1,
     _filterTags: ["salon", "pokoj", "recepcja"],
     options: JSON.stringify([
@@ -765,3 +765,5 @@ export const products = [
     colors: [{ name: "Naturalny bambus", hex: "#dcb98a" }],
   },
 ];
+
+// test
