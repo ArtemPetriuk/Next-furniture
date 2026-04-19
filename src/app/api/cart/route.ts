@@ -1,7 +1,6 @@
 import prisma from "../../../../prisma/prisma-client";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { getUserSession } from "@/lib/get-user-session";
 import { updateCartTotalAmount } from "@/lib/update-cart-total-amount";
 import { findOrCreateCart } from "@/lib/find-or-create-cart";
 import { CreateCartItemValues } from "@/components/shared/services/dto/cart.dto";
@@ -13,35 +12,12 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const cookieStore = cookies();
-    const cartToken = cookieStore.get("cartToken")?.value;
+    let cartToken = cookieStore.get("cartToken")?.value;
 
-    if (!cartToken) {
-      return NextResponse.json({ items: [] });
-    }
-
-    // 1. Отримуємо кошик
-    const userCart = await prisma.cart.findFirst({
-      where: { token: cartToken },
-      include: {
-        items: {
-          orderBy: { createdAt: "desc" },
-          include: {
-            productItem: { include: { product: true } },
-            additionally: true,
-          },
-        },
-      },
-    });
-
-    if (!userCart) {
-      return NextResponse.json({ items: [] });
-    }
-
-    // 2. Отримуємо сесію, щоб дізнатися, чи це залогований юзер
+    // 1. Перевіряємо сесію
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     let userId: number | null = null;
 
-    // 3. ЯКЩО ЮЗЕР ЗАЛОГОВАНИЙ: Шукаємо його реальний ID в базі
     if (token?.email) {
       const user = await prisma.user.findFirst({
         where: { email: token.email as string },
@@ -51,22 +27,53 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4. Перераховуємо суму (на випадок зміни цін в адмінці)
-    const totalAmount = userCart.items.reduce((acc, item) => {
-      const additionalPrice = item.additionally.reduce(
-        (acc, opt) => acc + opt.price,
-        0,
-      );
-      return acc + (item.productItem.price + additionalPrice) * item.quantity;
-    }, 0);
+    // 2. Шукаємо обидва кошики
+    let dbUserCart = null;
+    if (userId) {
+      dbUserCart = await prisma.cart.findFirst({ where: { userId } });
+    }
 
-    // 5. Оновлюємо кошик (прив'язуємо до userId ТІЛЬКИ якщо ми його знайшли)
-    const updatedCart = await prisma.cart.update({
-      where: { id: userCart.id },
-      data: {
-        totalAmount,
-        ...(userId ? { userId } : {}), // Оновлюємо userId тільки якщо він існує і коректний
-      },
+    let tokenCart = null;
+    if (cartToken) {
+      tokenCart = await prisma.cart.findFirst({ where: { token: cartToken } });
+    }
+
+    // --- НОВА ЛОГІКА: ПРІОРИТЕТ АКАУНТУ (БЕЗ ЗЛИТТЯ) ---
+    let currentCartId = null;
+
+    if (userId && dbUserCart) {
+      // Якщо юзер залогований і має свій кошик в базі
+      currentCartId = dbUserCart.id;
+      cartToken = dbUserCart.token as string; // Беремо токен з акаунта (додали as string)
+
+      // Видаляємо гостьовий кошик, якщо він існує і він інший
+      // Видаляємо гостьовий кошик, якщо він існує і він інший
+      if (tokenCart && tokenCart.id !== dbUserCart.id) {
+        // 🔥 ФІКС: Спочатку очищаємо кошик від товарів
+        await prisma.cartItem.deleteMany({ where: { cartId: tokenCart.id } });
+        // Тепер безпечно видаляємо сам пустий кошик
+        await prisma.cart.delete({ where: { id: tokenCart.id } });
+      }
+    } else if (userId && !dbUserCart && tokenCart) {
+      // Якщо у юзера ще немає кошика в акаунті, але він щось накидав гостем
+      // Прив'язуємо цей гостьовий кошик до нього
+      await prisma.cart.update({
+        where: { id: tokenCart.id },
+        data: { userId },
+      });
+      currentCartId = tokenCart.id;
+    } else if (tokenCart) {
+      // Звичайний гість
+      currentCartId = tokenCart.id;
+    }
+
+    if (!currentCartId) {
+      return NextResponse.json({ items: [] });
+    }
+
+    // 3. Отримуємо фінальний кошик
+    const finalCart = await prisma.cart.findFirst({
+      where: { id: currentCartId },
       include: {
         items: {
           orderBy: { createdAt: "desc" },
@@ -78,7 +85,44 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(updatedCart);
+    if (!finalCart) {
+      return NextResponse.json({ items: [] });
+    }
+
+    // 4. Перерахунок суми
+    const totalAmount = finalCart.items.reduce((acc, item) => {
+      const additionalPrice = item.additionally.reduce(
+        (a, opt) => a + opt.price,
+        0,
+      );
+      return acc + (item.productItem.price + additionalPrice) * item.quantity;
+    }, 0);
+
+    const updatedCart = await prisma.cart.update({
+      where: { id: finalCart.id },
+      data: { totalAmount },
+      include: {
+        items: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            productItem: { include: { product: true } },
+            additionally: true,
+          },
+        },
+      },
+    });
+
+    const response = NextResponse.json(updatedCart);
+
+    // Оновлюємо куку, щоб вона завжди відповідала поточному кошику
+    if (cartToken) {
+      response.cookies.set("cartToken", cartToken, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    return response;
   } catch (error) {
     console.error("[CART_GET] Server Error", error);
     return NextResponse.json(
@@ -87,6 +131,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const data = body as CreateCartItemValues;
