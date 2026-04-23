@@ -61,7 +61,7 @@ export async function POST(req: Request) {
               <h2 style="color: #333333; text-align: center; margin-bottom: 20px;">Dziękujemy za płatność! 🎉</h2>
               
               <p style="color: #555555; font-size: 16px; line-height: 1.5; text-align: center;">
-                Twoje zamówienie <strong>#${order.id}</strong> na kwotę <span style="color: #6366f1; font-weight: bold;">${order.totalAmount} PLN</span> zostało pomyślnie opłacone.
+                Twoje zamówienie na kwotę <span style="color: #6366f1; font-weight: bold;">${order.totalAmount} PLN</span> zostało pomyślnie opłacone.
               </p>
               
               <p style="color: #555555; font-size: 16px; line-height: 1.5; text-align: center;">
@@ -76,7 +76,6 @@ export async function POST(req: Request) {
             </div>
           `,
         });
-        console.log(`[WEBHOOK] Wysłano e-mail dla zamówienia ${order.id}`);
       } catch (err) {
         console.error("[BŁĄD WYSYŁANIA E-MAILA WEBHOOK]", err);
       }

@@ -16,7 +16,7 @@ export const OrderSuccessEmail: React.FC<OrderSuccessEmailProps> = ({
     {/* Банер з картинкою */}
     <div style={{ textAlign: "center", marginBottom: "20px" }}>
       <img
-        src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+        src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
         alt="Next Furniture"
         style={{
           width: "100%",
@@ -41,7 +41,7 @@ export const OrderSuccessEmail: React.FC<OrderSuccessEmailProps> = ({
         href={paymentUrl}
         style={{
           padding: "12px 24px",
-          backgroundColor: "#6366f1", // Зробив колір кнопки трохи сучаснішим (індиго), можеш повернути "#000", якщо треба чорний
+          backgroundColor: "#6366f1",
           color: "#fff",
           textDecoration: "none",
           borderRadius: "5px",
