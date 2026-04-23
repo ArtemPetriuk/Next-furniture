@@ -11,11 +11,28 @@ export const OrderSuccessEmail: React.FC<OrderSuccessEmailProps> = ({
   totalAmount,
   paymentUrl,
 }) => (
-  <div style={{ fontFamily: "sans-serif", color: "#333" }}>
-    <h1>Dziękujemy za zakupy, zamówienie #{orderId}! 🎉</h1>
+  <div style={{ fontFamily: "sans-serif", color: "#333", maxWidth: "600px", margin: "0 auto" }}>
+    
+    {/* Банер з картинкою */}
+    <div style={{ textAlign: "center", marginBottom: "20px" }}>
+      <img
+        src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+        alt="Next Furniture"
+        style={{
+          width: "100%",
+          maxWidth: "600px",
+          height: "auto",
+          borderRadius: "8px",
+          display: "block",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+        }}
+      />
+    </div>
+
+    <h1>Dziękujemy za zakupy! 🎉</h1>
     <p>Twoje zamówienie zostało pomyślnie utworzone.</p>
 
-    <p>
+    <p style={{ fontSize: "16px" }}>
       Kwota do zapłaty: <b>{totalAmount} zł</b>
     </p>
 
@@ -24,7 +41,7 @@ export const OrderSuccessEmail: React.FC<OrderSuccessEmailProps> = ({
         href={paymentUrl}
         style={{
           padding: "12px 24px",
-          backgroundColor: "#000",
+          backgroundColor: "#6366f1", // Зробив колір кнопки трохи сучаснішим (індиго), можеш повернути "#000", якщо треба чорний
           color: "#fff",
           textDecoration: "none",
           borderRadius: "5px",
@@ -37,11 +54,12 @@ export const OrderSuccessEmail: React.FC<OrderSuccessEmailProps> = ({
       </a>
     )}
 
-    <hr style={{ margin: "20px 0", border: "1px solid #eee" }} />
-    <p style={{ color: "#888", fontSize: "14px" }}>
+    <hr style={{ margin: "30px 0 20px", border: "none", borderTop: "1px solid #eee" }} />
+    
+    <p style={{ color: "#888", fontSize: "14px", lineHeight: "1.5" }}>
       Z poważaniem,
       <br />
-      Zespół Next Furniture
+      <strong>Zespół Next Furniture</strong>
     </p>
   </div>
 );

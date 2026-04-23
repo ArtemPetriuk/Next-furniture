@@ -1,16 +1,14 @@
-import { render } from "@react-email/render";
 import { NextResponse, NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { getToken } from "next-auth/jwt";
 import Stripe from "stripe";
 import prisma from "@prisma/prisma-client";
 import { getUserSession } from "@/lib/get-user-session";
-import { Resend } from "resend";
-import { OrderSuccessEmail } from "@/components/email/order-success";
+import { sendOrderCreatedEmail } from "@/lib/mail"; // <-- Імпортуємо нашу нову функцію
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-const resend = new Resend(process.env.RESEND_API_KEY);
 const MONTAGE_PRICE = 499;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -19,25 +17,25 @@ export async function POST(req: NextRequest) {
 
     if (!cartToken) {
       return NextResponse.json(
-        { error: "Cart token not found" },
-        { status: 404 },
+        { error: "Nie znaleziono tokenu koszyka" },
+        { status: 404 }
       );
     }
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-    // 1. Отримуємо коректний внутрішній ID користувача з бази даних
+    // 1. Pobieramy poprawne wewnętrzne ID użytkownika z bazy danych
     let userId: number | null = null;
     if (token?.email) {
       const user = await prisma.user.findFirst({
         where: { email: token.email },
       });
       if (user) {
-        userId = user.id; // Це буде валідний Int для бази даних
+        userId = user.id;
       }
     }
 
-    // 2. Шукаємо кошик користувача
+    // 2. Wyszukujemy koszyk użytkownika
     const userCart = await prisma.cart.findFirst({
       where: { token: cartToken },
       include: {
@@ -51,14 +49,14 @@ export async function POST(req: NextRequest) {
     });
 
     if (!userCart || userCart.items.length === 0) {
-      return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+      return NextResponse.json({ error: "Koszyk jest pusty" }, { status: 400 });
     }
 
-    // 3. Розрахунок цін
+    // 3. Obliczanie cen
     const orderItems = userCart.items.map((item) => {
       const additionalPrice = item.additionally.reduce(
         (acc, opt) => acc + opt.price,
-        0,
+        0
       );
       const itemPrice = item.productItem.price + additionalPrice;
 
@@ -72,7 +70,7 @@ export async function POST(req: NextRequest) {
     const finalTotalAmount =
       userCart.totalAmount + (body.isMontageEnabled ? MONTAGE_PRICE : 0);
 
-    // 4. ТРАНЗАКЦІЯ
+    // 4. TRANSAKCJA
     const order = await prisma.$transaction(async (tx) => {
       for (const item of userCart.items) {
         const productItem = await tx.productItem.findUnique({
@@ -80,19 +78,19 @@ export async function POST(req: NextRequest) {
         });
 
         if (!productItem || productItem.stock < item.quantity) {
-          throw new Error(`Товар закінчився на складі`);
+          throw new Error(`Brak produktu na magazynie`); // Переклад помилки складу
         }
 
         await tx.productItem.update({
           where: { id: item.productItemId },
-          data: { stock: { decrement: item.quantity } }, // Віднімаємо 1 stock при покупці
+          data: { stock: { decrement: item.quantity } }, // Odejmujemy ilość sztuk z magazynu
         });
       }
 
       const newOrder = await tx.order.create({
         data: {
           token: cartToken,
-          userId: userId, // Тепер тут коректний Int
+          userId: userId,
           fullName: body.firstName + " " + body.lastName,
           email: body.email,
           phone: body.phone,
@@ -116,7 +114,7 @@ export async function POST(req: NextRequest) {
       return newOrder;
     });
 
-    // 4. СТВОРЮЄМО СЕСІЮ ОПЛАТИ STRIPE
+    // 5. TWORZENIE SESJI PŁATNOŚCI STRIPE
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -134,25 +132,8 @@ export async function POST(req: NextRequest) {
       metadata: { order_id: order.id },
     });
 
-    // 5. Відправка Email (опціонально)
-    try {
-      const emailHtml = await render(
-        <OrderSuccessEmail
-          orderId={order.id}
-          totalAmount={finalTotalAmount}
-          paymentUrl={session.url || ""}
-        />,
-      );
-
-      await resend.emails.send({
-        from: "Next Furniture <onboarding@resend.dev>",
-        to: body.email,
-        subject: `Next Furniture | Zamówienie #${order.id}`,
-        html: emailHtml,
-      });
-    } catch (err) {
-      console.error(" [EMAIL ERROR]", err);
-    }
+    // 6. Wysyłanie e-maila z potwierdzeniem utworzenia (wyклик функції з іншого файлу)
+    await sendOrderCreatedEmail(body.email, order.id, finalTotalAmount, session.url || "");
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
@@ -160,9 +141,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message:
-          error instanceof Error ? error.message : "Internal Server Error",
+          error instanceof Error ? error.message : "Wewnętrzny błąd serwera",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -186,8 +167,8 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("[ORDERS_GET] Error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error" },
-      { status: 500 },
+      { message: "Wewnętrzny błąd serwera" },
+      { status: 500 }
     );
   }
 }
