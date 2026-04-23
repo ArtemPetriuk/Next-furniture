@@ -82,9 +82,6 @@ export const OrderSuccessEmail: React.FC<OrderSuccessEmailProps> = ({
         marginBottom: "30px",
         textAlign: "center"
       }}>
-        <p style={{ margin: "0 0 10px", fontSize: "15px", color: "#666" }}>
-          Numer zamówienia: <strong style={{ color: "#333" }}>#{orderId}</strong>
-        </p>
         <p style={{ margin: "0", fontSize: "16px", color: "#666" }}>
           Kwota do zapłaty: <strong style={{ color: "#6366f1", fontSize: "18px" }}>{totalAmount} zł</strong>
         </p>
